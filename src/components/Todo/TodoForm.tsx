@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Todo, Priority } from '../../types/todo';
+import { format } from 'date-fns';
 
 interface TodoFormProps {
   onSubmit: (todo: Omit<Todo, 'id'>) => void;
@@ -11,7 +12,7 @@ export function TodoForm({ onSubmit, initialTodo }: TodoFormProps) {
   const [dueDate, setDueDate] = useState(
     initialTodo?.dueDate
       ? format(initialTodo.dueDate, 'yyyy-MM-dd\'T\'HH:mm')
-      : ''
+      : format(new Date(), 'yyyy-MM-dd\'T\'HH:mm')
   );
   const [priority, setPriority] = useState<Priority>(initialTodo?.priority || 'medium');
   const [notes, setNotes] = useState(initialTodo?.notes || '');
@@ -25,6 +26,12 @@ export function TodoForm({ onSubmit, initialTodo }: TodoFormProps) {
       notes,
       completed: initialTodo?.completed || false,
     });
+    
+    if (!initialTodo) {
+      setTitle('');
+      setNotes('');
+      setPriority('medium');
+    }
   };
 
   return (
