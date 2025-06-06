@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Todo, Priority } from '../types/todo';
 import { XMarkIcon, CalendarIcon, FlagIcon } from '@heroicons/react/24/outline';
