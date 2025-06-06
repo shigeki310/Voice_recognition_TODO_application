@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ViewMode } from '../types/todo';
 import { ViewModeSelector } from './ViewModeSelector';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 import { ja } from 'date-fns/locale';
 
 interface HeaderProps {
@@ -20,7 +20,9 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, to
       case 'day':
         return format(selectedDate, 'M月d日 (E)', { locale: ja });
       case 'week':
-        return format(selectedDate, 'M月 第w週', { locale: ja });
+        const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
+        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
+        return `${format(weekStart, 'M月d日', { locale: ja })} - ${format(weekEnd, 'M月d日', { locale: ja })}`;
       case 'month':
         return format(selectedDate, 'yyyy年M月', { locale: ja });
       default:
