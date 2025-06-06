@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { ViewMode } from './types/todo';
 import { useTodos } from './hooks/useTodos';
