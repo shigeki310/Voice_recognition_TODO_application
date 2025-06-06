@@ -1,7 +1,7 @@
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MicrophoneIcon, StopIcon } from '@heroicons/react/24/solid';
 import { useVoiceRecognition } from '../hooks/useVoiceRecognition';
-import { useEffect } from 'react';
 
 interface VoiceButtonProps {
   onTranscript: (text: string) => void;
