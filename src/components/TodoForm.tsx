@@ -28,7 +28,9 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle }: Todo
       setTitle(initialTitle || '');
       setDescription('');
       setPriority('medium');
-      setDueDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+      // デフォルトで現在時刻を設定
+      const now = new Date();
+      setDueDate(format(now, "yyyy-MM-dd'T'HH:mm"));
     }
   }, [todo, initialTitle, isOpen]);
 
@@ -47,7 +49,8 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle }: Todo
       setTitle('');
       setDescription('');
       setPriority('medium');
-      setDueDate(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+      const now = new Date();
+      setDueDate(format(now, "yyyy-MM-dd'T'HH:mm"));
     }
     
     onClose();
