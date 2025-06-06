@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion } from 'framer-motion';
 import { ViewMode } from '../types/todo';
 import { ViewModeSelector } from './ViewModeSelector';
