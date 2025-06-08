@@ -28,6 +28,8 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, to
         return `${format(weekStart, 'M月d日', { locale: ja })} - ${format(weekEnd, 'M月d日', { locale: ja })}`;
       case 'month':
         return format(selectedDate, 'yyyy年M月', { locale: ja });
+      case 'future':
+        return '次月以降のタスク';
       default:
         return '';
     }

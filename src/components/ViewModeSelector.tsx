@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ViewMode } from '../types/todo';
-import { CalendarDaysIcon, CalendarIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import { CalendarDaysIcon, CalendarIcon, Squares2X2Icon, ArrowRightIcon } from '@heroicons/react/24/outline';
 
 interface ViewModeSelectorProps {
   currentMode: ViewMode;
@@ -12,6 +12,7 @@ const modes = [
   { key: 'day' as ViewMode, label: '本日のタスク', icon: CalendarDaysIcon },
   { key: 'week' as ViewMode, label: '週', icon: CalendarIcon },
   { key: 'month' as ViewMode, label: '月', icon: Squares2X2Icon },
+  { key: 'future' as ViewMode, label: '次月以降', icon: ArrowRightIcon },
 ];
 
 export function ViewModeSelector({ currentMode, onModeChange }: ViewModeSelectorProps) {

@@ -1,5 +1,5 @@
 export type Priority = 'low' | 'medium' | 'high';
-export type ViewMode = 'day' | 'week' | 'month';
+export type ViewMode = 'day' | 'week' | 'month' | 'future';
 
 export interface Todo {
   id: string;

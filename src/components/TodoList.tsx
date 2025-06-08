@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Todo, ViewMode } from '../types/todo';
 import { TodoCard } from './TodoCard';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval, startOfDay, endOfDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
@@ -17,6 +17,9 @@ interface TodoListProps {
 }
 
 export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDelete, onDateClick }: TodoListProps) {
+  // 基準日: 2025/06/08
+  const baseDate = new Date('2025-06-08');
+  
   const getFilteredTodos = () => {
     switch (viewMode) {
       case 'day':
@@ -35,6 +38,11 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
         return todos.filter(todo => 
           todo.dueDate >= monthStart && todo.dueDate <= monthEnd
         );
+      
+      case 'future':
+        // 基準日の翌月以降のTODOを取得
+        const nextMonthStart = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
+        return todos.filter(todo => todo.dueDate >= nextMonthStart);
       
       default:
         return todos;
@@ -62,25 +70,51 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
       return grouped;
     }
     
-    // Month view - group by week
-    const monthStart = startOfMonth(selectedDate);
-    const monthEnd = endOfMonth(selectedDate);
-    const weeks = eachWeekOfInterval({ start: monthStart, end: monthEnd }, { weekStartsOn: 0 });
-    
-    const grouped: Record<string, Record<string, Todo[]>> = {};
-    weeks.forEach((weekStart, weekIndex) => {
-      const weekEnd = endOfWeek(weekStart, { weekStartsOn: 0 });
-      const weekKey = `week-${weekIndex}`;
-      grouped[weekKey] = {};
+    if (viewMode === 'month') {
+      // Month view - group by week
+      const monthStart = startOfMonth(selectedDate);
+      const monthEnd = endOfMonth(selectedDate);
+      const weeks = eachWeekOfInterval({ start: monthStart, end: monthEnd }, { weekStartsOn: 0 });
       
-      const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
-      days.forEach(day => {
-        const dayKey = format(day, 'yyyy-MM-dd');
-        grouped[weekKey][dayKey] = filtered.filter(todo => isSameDay(todo.dueDate, day));
+      const grouped: Record<string, Record<string, Todo[]>> = {};
+      weeks.forEach((weekStart, weekIndex) => {
+        const weekEnd = endOfWeek(weekStart, { weekStartsOn: 0 });
+        const weekKey = `week-${weekIndex}`;
+        grouped[weekKey] = {};
+        
+        const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+        days.forEach(day => {
+          const dayKey = format(day, 'yyyy-MM-dd');
+          grouped[weekKey][dayKey] = filtered.filter(todo => isSameDay(todo.dueDate, day));
+        });
       });
-    });
+      
+      return grouped;
+    }
     
-    return grouped;
+    if (viewMode === 'future') {
+      // 月単位でグルーピング
+      const monthGroups: Record<string, Todo[]> = {};
+      
+      filtered.forEach(todo => {
+        const monthKey = format(todo.dueDate, 'yyyy-MM');
+        if (!monthGroups[monthKey]) {
+          monthGroups[monthKey] = [];
+        }
+        monthGroups[monthKey].push(todo);
+      });
+      
+      // 月をソート（時系列順）
+      const sortedMonths = Object.keys(monthGroups).sort();
+      const sortedGroups: Record<string, Todo[]> = {};
+      sortedMonths.forEach(month => {
+        sortedGroups[month] = monthGroups[month].sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime());
+      });
+      
+      return sortedGroups;
+    }
+    
+    return {};
   };
 
   const groupedTodos = getGroupedTodos();
@@ -92,12 +126,26 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 text-slate-400\" fill="none\" stroke="currentColor\" viewBox="0 0 24 24">
-            <path strokeLinecap="round\" strokeLinejoin="round\" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         </div>
         <h3 className="text-lg font-medium text-slate-900 mb-2">本日はタスクがありません</h3>
         <p className="text-slate-500">新しいタスクを追加してみましょう</p>
+      </div>
+    );
+  }
+
+  if (!hasAnyTodos && viewMode === 'future') {
+    return (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+          <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-slate-900 mb-2">次月以降のタスクがありません</h3>
+        <p className="text-slate-500">将来のタスクを追加してみましょう</p>
       </div>
     );
   }
@@ -118,6 +166,63 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
               onDelete={onDelete}
             />
           ))}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  // Future view - 月単位でグルーピング表示
+  if (viewMode === 'future') {
+    const monthGroups = groupedTodos as Record<string, Todo[]>;
+    
+    return (
+      <div className="space-y-8">
+        <AnimatePresence mode="popLayout">
+          {Object.entries(monthGroups).map(([monthKey, monthTodos]) => {
+            const monthDate = new Date(monthKey + '-01');
+            const monthLabel = format(monthDate, 'yyyy年M月', { locale: ja });
+            
+            return (
+              <motion.div
+                key={monthKey}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-4"
+              >
+                {/* 月のヘッダー */}
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl font-bold text-slate-900">{monthLabel}</h2>
+                  <div className="flex-1 h-px bg-slate-200" />
+                  <span className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                    {monthTodos.length}件のタスク
+                  </span>
+                </div>
+
+                {/* タスクリスト */}
+                <div className="space-y-3">
+                  <AnimatePresence mode="popLayout">
+                    {monthTodos.map(todo => (
+                      <motion.div
+                        key={todo.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="ml-4"
+                      >
+                        <TodoCard
+                          todo={todo}
+                          onToggle={onToggle}
+                          onEdit={onEdit}
+                          onDelete={onDelete}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
     );
