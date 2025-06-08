@@ -40,6 +40,10 @@ export function TodoApp() {
     setIsFormOpen(true);
   };
 
+  const handleDateChange = (date: Date) => {
+    setSelectedDate(date);
+  };
+
   const handleFormSubmit = (title, description, priority, dueDate) => {
     if (editingTodo) {
       updateTodo(editingTodo.id, {
@@ -75,6 +79,7 @@ export function TodoApp() {
         viewMode={viewMode}
         onViewModeChange={setViewMode}
         selectedDate={selectedDate}
+        onDateChange={handleDateChange}
         onAddTodo={handleAddTodo}
         todos={todos}
       />

@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ViewMode } from '../types/todo';
 import { ViewModeSelector } from './ViewModeSelector';
-import { PlusIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
+import { PlusIcon, Cog6ToothIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay, addDays, subDays, addWeeks, subWeeks, addMonths, subMonths } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuth } from '../hooks/useAuth';
 import { UserSettings } from './settings/UserSettings';
@@ -13,11 +13,12 @@ interface HeaderProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   selectedDate: Date;
+  onDateChange: (date: Date) => void;
   onAddTodo: () => void;
   todos: Todo[];
 }
 
-export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, todos }: HeaderProps) {
+export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange, onAddTodo, todos }: HeaderProps) {
   const { authState, logout } = useAuth();
   const [showUserSettings, setShowUserSettings] = useState(false);
 
@@ -75,9 +76,45 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, to
 
   const taskCount = getTaskCount();
 
+  const handlePrevious = () => {
+    switch (viewMode) {
+      case 'day':
+        onDateChange(subDays(selectedDate, 1));
+        break;
+      case 'week':
+        onDateChange(subWeeks(selectedDate, 1));
+        break;
+      case 'month':
+        onDateChange(subMonths(selectedDate, 1));
+        break;
+      case 'future':
+        // 次月以降ビューでは日付移動は無効
+        break;
+    }
+  };
+
+  const handleNext = () => {
+    switch (viewMode) {
+      case 'day':
+        onDateChange(addDays(selectedDate, 1));
+        break;
+      case 'week':
+        onDateChange(addWeeks(selectedDate, 1));
+        break;
+      case 'month':
+        onDateChange(addMonths(selectedDate, 1));
+        break;
+      case 'future':
+        // 次月以降ビューでは日付移動は無効
+        break;
+    }
+  };
+
   const handleUserSettings = () => {
     setShowUserSettings(true);
   };
+
+  const isNavigationEnabled = viewMode !== 'future';
 
   return (
     <>
@@ -138,8 +175,33 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, to
 
           {/* 3. セカンドヘッダー */}
           <div className="flex items-center justify-between pb-4">
-            {/* 左側：日付表示 */}
-            <div className="flex items-center gap-2">
+            {/* 左側：日付表示とナビゲーション */}
+            <div className="flex items-center gap-3">
+              {/* 日付ナビゲーション */}
+              {isNavigationEnabled && (
+                <div className="flex items-center gap-1">
+                  <motion.button
+                    onClick={handlePrevious}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+                    title="前へ"
+                  >
+                    <ChevronLeftIcon className="w-4 h-4" />
+                  </motion.button>
+                  
+                  <motion.button
+                    onClick={handleNext}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+                    title="次へ"
+                  >
+                    <ChevronRightIcon className="w-4 h-4" />
+                  </motion.button>
+                </div>
+              )}
+
               <motion.div
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
