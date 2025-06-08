@@ -53,10 +53,7 @@ export type Database = {
           description: string | null;
           completed: boolean;
           priority: 'low' | 'medium' | 'high';
-          status: 'not_started' | 'in_progress' | 'completed' | 'cancelled';
           due_date: string;
-          start_time: string | null;
-          end_time: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -67,10 +64,7 @@ export type Database = {
           description?: string | null;
           completed?: boolean;
           priority?: 'low' | 'medium' | 'high';
-          status?: 'not_started' | 'in_progress' | 'completed' | 'cancelled';
           due_date: string;
-          start_time?: string | null;
-          end_time?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -81,10 +75,7 @@ export type Database = {
           description?: string | null;
           completed?: boolean;
           priority?: 'low' | 'medium' | 'high';
-          status?: 'not_started' | 'in_progress' | 'completed' | 'cancelled';
           due_date?: string;
-          start_time?: string | null;
-          end_time?: string | null;
           created_at?: string;
           updated_at?: string;
         };

@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Todo, Priority, TaskStatus } from '../types/todo';
+import { Todo, Priority } from '../types/todo';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
@@ -31,10 +31,7 @@ export function useTodos() {
         description: todo.description || undefined,
         completed: todo.completed,
         priority: todo.priority as Priority,
-        status: (todo.status as TaskStatus) || 'not_started',
         dueDate: new Date(todo.due_date),
-        startTime: todo.start_time ? new Date(todo.start_time) : undefined,
-        endTime: todo.end_time ? new Date(todo.end_time) : undefined,
         createdAt: new Date(todo.created_at),
         updatedAt: new Date(todo.updated_at)
       }));
@@ -55,10 +52,7 @@ export function useTodos() {
     title: string, 
     description?: string, 
     priority: Priority = 'medium', 
-    dueDate?: Date,
-    startTime?: Date,
-    endTime?: Date,
-    status: TaskStatus = 'not_started'
+    dueDate?: Date
   ) => {
     if (!authState.user) return null;
 
@@ -67,12 +61,9 @@ export function useTodos() {
         user_id: authState.user.id,
         title,
         description: description || null,
-        completed: status === 'completed',
+        completed: false,
         priority,
-        status,
-        due_date: (dueDate || new Date()).toISOString(),
-        start_time: startTime ? startTime.toISOString() : null,
-        end_time: endTime ? endTime.toISOString() : null
+        due_date: (dueDate || new Date()).toISOString()
       };
 
       const { data, error } = await supabase
@@ -89,10 +80,7 @@ export function useTodos() {
         description: data.description || undefined,
         completed: data.completed,
         priority: data.priority as Priority,
-        status: (data.status as TaskStatus) || 'not_started',
         dueDate: new Date(data.due_date),
-        startTime: data.start_time ? new Date(data.start_time) : undefined,
-        endTime: data.end_time ? new Date(data.end_time) : undefined,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at)
       };
@@ -117,10 +105,7 @@ export function useTodos() {
       if (updates.description !== undefined) updateData.description = updates.description || null;
       if (updates.completed !== undefined) updateData.completed = updates.completed;
       if (updates.priority !== undefined) updateData.priority = updates.priority;
-      if (updates.status !== undefined) updateData.status = updates.status;
       if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate.toISOString();
-      if (updates.startTime !== undefined) updateData.start_time = updates.startTime ? updates.startTime.toISOString() : null;
-      if (updates.endTime !== undefined) updateData.end_time = updates.endTime ? updates.endTime.toISOString() : null;
 
       const { error } = await supabase
         .from('todos')
@@ -162,13 +147,7 @@ export function useTodos() {
     const todo = todos.find(t => t.id === id);
     if (!todo) return;
 
-    const newCompleted = !todo.completed;
-    const newStatus = newCompleted ? 'completed' : 'not_started';
-
-    await updateTodo(id, { 
-      completed: newCompleted,
-      status: newStatus
-    });
+    await updateTodo(id, { completed: !todo.completed });
   }, [todos, updateTodo]);
 
   const reorderTodos = useCallback((activeId: string, overId: string) => {

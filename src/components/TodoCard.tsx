@@ -46,16 +46,8 @@ const priorityConfig = {
   }
 };
 
-const statusConfig = {
-  not_started: { label: '未開始', color: 'text-slate-500', bg: 'bg-slate-50' },
-  in_progress: { label: '進行中', color: 'text-blue-600', bg: 'bg-blue-50' },
-  completed: { label: '完了', color: 'text-green-600', bg: 'bg-green-50' },
-  on_hold: { label: '保留', color: 'text-amber-600', bg: 'bg-amber-50' },
-};
-
 export function TodoCard({ todo, onToggle, onEdit, onDelete }: TodoCardProps) {
   const priority = priorityConfig[todo.priority];
-  const status = statusConfig[todo.status];
   const PriorityIcon = priority.icon;
   
   const isOverdue = !todo.completed && todo.dueDate < new Date();
@@ -67,92 +59,76 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete }: TodoCardProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      whileHover={{ y: -1 }}
+      whileHover={{ y: -2 }}
       className={clsx(
-        'task-card p-3 group relative',
+        'task-card p-4 group',
         todo.priority === 'high' && 'priority-high',
         todo.priority === 'medium' && 'priority-medium',
         todo.priority === 'low' && 'priority-low',
         todo.completed && 'opacity-60'
       )}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-3">
         <button
           onClick={() => onToggle(todo.id)}
           className="flex-shrink-0 mt-0.5 transition-colors duration-200"
         >
           {todo.completed ? (
-            <CheckCircleIconSolid className="w-4 h-4 text-green-500" />
+            <CheckCircleIconSolid className="w-5 h-5 text-green-500" />
           ) : (
-            <CheckCircleIcon className="w-4 h-4 text-slate-400 hover:text-green-500" />
+            <CheckCircleIcon className="w-5 h-5 text-slate-400 hover:text-green-500" />
           )}
         </button>
 
         <div className="flex-1 min-w-0">
           <h3 className={clsx(
-            'font-medium text-slate-900 mb-1 text-sm leading-tight',
+            'font-medium text-slate-900 mb-1',
             todo.completed && 'line-through text-slate-500'
           )}>
             {todo.title}
           </h3>
           
           {todo.description && (
-            <p className="text-xs text-slate-600 mb-2 line-clamp-2 leading-relaxed">
+            <p className="text-sm text-slate-600 mb-2 line-clamp-2">
               {todo.description}
             </p>
           )}
 
-          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+          <div className="flex items-center gap-3 text-xs text-slate-500">
             <div className="flex items-center gap-1">
               <ClockIcon className="w-3 h-3" />
               <span className={clsx(
-                'truncate',
                 isOverdue && !todo.completed && 'text-red-500 font-medium',
                 isDueToday && !todo.completed && 'text-amber-600 font-medium'
               )}>
-                {todo.startTime && todo.endTime ? (
-                  `${format(todo.startTime, 'HH:mm')} - ${format(todo.endTime, 'HH:mm')}`
-                ) : (
-                  format(todo.dueDate, 'HH:mm', { locale: ja })
-                )}
+                {format(todo.dueDate, 'M月d日 HH:mm', { locale: ja })}
               </span>
             </div>
             
             <div className={clsx(
-              'flex items-center gap-1 px-1.5 py-0.5 rounded-full',
+              'flex items-center gap-1 px-2 py-0.5 rounded-full',
               priority.bg,
               priority.border,
               'border'
             )}>
-              <PriorityIcon className={clsx('w-2.5 h-2.5', priority.color)} />
-              <span className={clsx('text-xs', priority.color)}>{priority.label}</span>
+              <PriorityIcon className={clsx('w-3 h-3', priority.color)} />
+              <span className={priority.color}>{priority.label}</span>
             </div>
-          </div>
-
-          {/* ステータス表示 */}
-          <div className="flex items-center gap-2">
-            <span className={clsx(
-              'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-              status.bg,
-              status.color
-            )}>
-              {status.label}
-            </span>
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute top-2 right-2">
+        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <button
             onClick={() => onEdit(todo)}
-            className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors duration-200"
+            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors duration-200"
           >
-            <PencilIcon className="w-3 h-3" />
+            <PencilIcon className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(todo.id)}
-            className="p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors duration-200"
+            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
           >
-            <TrashIcon className="w-3 h-3" />
+            <TrashIcon className="w-4 h-4" />
           </button>
         </div>
       </div>

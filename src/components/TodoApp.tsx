@@ -40,19 +40,16 @@ export function TodoApp() {
     setIsFormOpen(true);
   };
 
-  const handleFormSubmit = (title, description, priority, dueDate, startTime, endTime, status) => {
+  const handleFormSubmit = (title, description, priority, dueDate) => {
     if (editingTodo) {
       updateTodo(editingTodo.id, {
         title,
         description,
         priority,
         dueDate,
-        startTime,
-        endTime,
-        status,
       });
     } else {
-      addTodo(title, description, priority, dueDate, startTime, endTime, status);
+      addTodo(title, description, priority, dueDate);
     }
   };
 
