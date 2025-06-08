@@ -24,14 +24,15 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
       setTitle(todo.title);
       setDescription(todo.description || '');
       setPriority(todo.priority);
-      setDueDate(format(todo.dueDate, "yyyy-MM-dd'T'HH:mm"));
+      // 日付のみを設定（時間は除外）
+      setDueDate(format(todo.dueDate, "yyyy-MM-dd"));
     } else {
       setTitle(initialTitle || '');
       setDescription('');
       setPriority('medium');
-      // selectedDateが指定されている場合はその日付を使用、そうでなければ現在時刻
+      // selectedDateが指定されている場合はその日付を使用、そうでなければ現在日付
       const baseDate = selectedDate || new Date();
-      setDueDate(format(baseDate, "yyyy-MM-dd'T'HH:mm"));
+      setDueDate(format(baseDate, "yyyy-MM-dd"));
     }
   }, [todo, initialTitle, selectedDate, isOpen]);
 
@@ -39,11 +40,14 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
     e.preventDefault();
     if (!title.trim()) return;
 
+    // 日付文字列から日付オブジェクトを作成（時間は00:00:00に設定）
+    const dueDateObj = new Date(dueDate + 'T00:00:00');
+
     onSubmit(
       title.trim(),
       description.trim() || undefined,
       priority,
-      new Date(dueDate)
+      dueDateObj
     );
     
     if (!todo) {
@@ -51,7 +55,7 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
       setDescription('');
       setPriority('medium');
       const baseDate = selectedDate || new Date();
-      setDueDate(format(baseDate, "yyyy-MM-dd'T'HH:mm"));
+      setDueDate(format(baseDate, "yyyy-MM-dd"));
     }
     
     onClose();
@@ -138,10 +142,10 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
             <div>
               <label htmlFor="dueDate" className="block text-sm font-medium text-slate-700 mb-2">
                 <CalendarIcon className="w-4 h-4 inline mr-1" />
-                期限
+                期限日
               </label>
               <input
-                type="datetime-local"
+                type="date"
                 id="dueDate"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}

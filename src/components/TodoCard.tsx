@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { 
   CheckCircleIcon, 
-  ClockIcon, 
+  CalendarIcon, 
   PencilIcon, 
   TrashIcon,
   ExclamationTriangleIcon,
@@ -131,12 +131,12 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
             
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
-                <ClockIcon className="w-2 h-2 text-slate-400" />
+                <CalendarIcon className="w-2 h-2 text-slate-400" />
                 <span className={clsx(
                   'text-xs',
                   isOverdue && !todo.completed ? 'text-red-500 font-medium' : 'text-slate-500'
                 )}>
-                  {format(todo.dueDate, 'HH:mm')}
+                  {format(todo.dueDate, 'M/d', { locale: ja })}
                 </span>
               </div>
               
@@ -218,12 +218,12 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
 
           <div className="flex items-center gap-3 text-xs text-slate-500">
             <div className="flex items-center gap-1">
-              <ClockIcon className="w-3 h-3" />
+              <CalendarIcon className="w-3 h-3" />
               <span className={clsx(
                 isOverdue && !todo.completed && 'text-red-500 font-medium',
                 isDueToday && !todo.completed && 'text-amber-600 font-medium'
               )}>
-                {format(todo.dueDate, 'M月d日 HH:mm', { locale: ja })}
+                {format(todo.dueDate, 'M月d日', { locale: ja })}
               </span>
             </div>
             
