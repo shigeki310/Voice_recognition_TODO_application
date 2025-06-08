@@ -3,22 +3,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ViewMode } from '../types/todo';
 import { ViewModeSelector } from './ViewModeSelector';
 import { PlusIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
-import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isSameDay } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useAuth } from '../hooks/useAuth';
 import { UserSettings } from './settings/UserSettings';
+import { Todo } from '../types/todo';
 
 interface HeaderProps {
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   selectedDate: Date;
   onAddTodo: () => void;
-  todoCount: number;
+  todos: Todo[];
 }
 
-export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, todoCount }: HeaderProps) {
+export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, todos }: HeaderProps) {
   const { authState, logout } = useAuth();
   const [showUserSettings, setShowUserSettings] = useState(false);
+
+  // 基準日: 2025/06/08
+  const baseDate = new Date('2025-06-08');
 
   const getDateDisplay = () => {
     switch (viewMode) {
@@ -36,6 +40,40 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, to
         return '';
     }
   };
+
+  const getTaskCount = () => {
+    switch (viewMode) {
+      case 'day':
+        // 本日のタスク数
+        return todos.filter(todo => isSameDay(todo.dueDate, selectedDate)).length;
+      
+      case 'week':
+        // 週のタスク数
+        const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
+        const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
+        return todos.filter(todo => 
+          todo.dueDate >= weekStart && todo.dueDate <= weekEnd
+        ).length;
+      
+      case 'month':
+        // 月のタスク数
+        const monthStart = startOfMonth(selectedDate);
+        const monthEnd = endOfMonth(selectedDate);
+        return todos.filter(todo => 
+          todo.dueDate >= monthStart && todo.dueDate <= monthEnd
+        ).length;
+      
+      case 'future':
+        // 次月以降のタスク数（基準日の翌月以降）
+        const nextMonthStart = new Date(baseDate.getFullYear(), baseDate.getMonth() + 1, 1);
+        return todos.filter(todo => todo.dueDate >= nextMonthStart).length;
+      
+      default:
+        return 0;
+    }
+  };
+
+  const taskCount = getTaskCount();
 
   const handleUserSettings = () => {
     setShowUserSettings(true);
@@ -112,7 +150,7 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onAddTodo, to
                   {getDateDisplay()}
                 </h2>
                 <span className="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
-                  {todoCount}件のタスク
+                  {taskCount}件のタスク
                 </span>
               </motion.div>
             </div>
