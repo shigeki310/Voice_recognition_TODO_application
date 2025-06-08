@@ -17,15 +17,30 @@ export function useTodos() {
     }
 
     try {
+      setLoading(true);
+      
+      // Test Supabase connection first
+      const { data: connectionTest, error: connectionError } = await supabase
+        .from('todos')
+        .select('count', { count: 'exact', head: true });
+
+      if (connectionError) {
+        console.error('Supabase connection error:', connectionError);
+        throw new Error(`Database connection failed: ${connectionError.message}`);
+      }
+
       const { data, error } = await supabase
         .from('todos')
         .select('*')
         .eq('user_id', authState.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase query error:', error);
+        throw error;
+      }
 
-      const formattedTodos: Todo[] = data.map(todo => ({
+      const formattedTodos: Todo[] = (data || []).map(todo => ({
         id: todo.id,
         title: todo.title,
         description: todo.description || undefined,
@@ -39,6 +54,8 @@ export function useTodos() {
       setTodos(formattedTodos);
     } catch (error) {
       console.error('Error loading todos:', error);
+      // Set empty array on error to prevent UI issues
+      setTodos([]);
     } finally {
       setLoading(false);
     }
@@ -72,7 +89,10 @@ export function useTodos() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding todo:', error);
+        throw error;
+      }
 
       const formattedTodo: Todo = {
         id: data.id,
@@ -113,7 +133,10 @@ export function useTodos() {
         .eq('id', id)
         .eq('user_id', authState.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating todo:', error);
+        throw error;
+      }
 
       setTodos(prev => prev.map(todo => 
         todo.id === id 
@@ -135,7 +158,10 @@ export function useTodos() {
         .eq('id', id)
         .eq('user_id', authState.user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting todo:', error);
+        throw error;
+      }
 
       setTodos(prev => prev.filter(todo => todo.id !== id));
     } catch (error) {

@@ -17,7 +17,18 @@ if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')
   throw new Error('Invalid Supabase URL format. Expected format: https://your-project-ref.supabase.co');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: false
+  },
+  global: {
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  },
+});
 
 export type Database = {
   public: {
