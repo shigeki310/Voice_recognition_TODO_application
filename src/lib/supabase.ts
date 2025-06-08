@@ -54,6 +54,8 @@ export type Database = {
           completed: boolean;
           priority: 'low' | 'medium' | 'high';
           due_date: string;
+          start_time: string | null;
+          end_time: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -65,6 +67,8 @@ export type Database = {
           completed?: boolean;
           priority?: 'low' | 'medium' | 'high';
           due_date: string;
+          start_time?: string | null;
+          end_time?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -76,6 +80,8 @@ export type Database = {
           completed?: boolean;
           priority?: 'low' | 'medium' | 'high';
           due_date?: string;
+          start_time?: string | null;
+          end_time?: string | null;
           created_at?: string;
           updated_at?: string;
         };
