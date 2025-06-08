@@ -14,6 +14,7 @@ export function TodoApp() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState(null);
   const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [formSelectedDate, setFormSelectedDate] = useState<Date | undefined>(undefined);
 
   const { todos, loading, addTodo, updateTodo, deleteTodo, toggleTodo } = useTodos();
 
@@ -23,24 +24,35 @@ export function TodoApp() {
 
   const handleAddTodo = () => {
     setEditingTodo(null);
+    setFormSelectedDate(undefined);
     setIsFormOpen(true);
   };
 
   const handleEditTodo = (todo) => {
     setEditingTodo(todo);
+    setFormSelectedDate(undefined);
     setIsFormOpen(true);
   };
 
-  const handleFormSubmit = (title, description, priority, dueDate) => {
+  const handleDateClick = (date: Date) => {
+    setEditingTodo(null);
+    setFormSelectedDate(date);
+    setIsFormOpen(true);
+  };
+
+  const handleFormSubmit = (title, description, priority, dueDate, startTime, endTime, status) => {
     if (editingTodo) {
       updateTodo(editingTodo.id, {
         title,
         description,
         priority,
         dueDate,
+        startTime,
+        endTime,
+        status,
       });
     } else {
-      addTodo(title, description, priority, dueDate);
+      addTodo(title, description, priority, dueDate, startTime, endTime, status);
     }
   };
 
@@ -48,6 +60,7 @@ export function TodoApp() {
     if (transcript.trim()) {
       setVoiceTranscript(transcript);
       setEditingTodo(null);
+      setFormSelectedDate(undefined);
       setIsFormOpen(true);
     }
   };
@@ -56,6 +69,7 @@ export function TodoApp() {
     setIsFormOpen(false);
     setEditingTodo(null);
     setVoiceTranscript('');
+    setFormSelectedDate(undefined);
   };
 
   return (
@@ -76,6 +90,7 @@ export function TodoApp() {
           onToggle={toggleTodo}
           onEdit={handleEditTodo}
           onDelete={deleteTodo}
+          onDateClick={handleDateClick}
         />
       </main>
 
@@ -86,6 +101,7 @@ export function TodoApp() {
           onClose={handleFormClose}
           onSubmit={handleFormSubmit}
           initialTitle={voiceTranscript}
+          selectedDate={formSelectedDate}
         />
       </AnimatePresence>
 

@@ -9,7 +9,7 @@ interface ViewModeSelectorProps {
 }
 
 const modes = [
-  { key: 'day' as ViewMode, label: '日', icon: CalendarDaysIcon },
+  { key: 'day' as ViewMode, label: '本日のタスク', icon: CalendarDaysIcon },
   { key: 'week' as ViewMode, label: '週', icon: CalendarIcon },
   { key: 'month' as ViewMode, label: '月', icon: Squares2X2Icon },
 ];

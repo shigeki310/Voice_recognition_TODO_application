@@ -2,8 +2,9 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Todo, ViewMode } from '../types/todo';
 import { TodoCard } from './TodoCard';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval, startOfDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { PlusIcon } from '@heroicons/react/24/outline';
 
 interface TodoListProps {
   todos: Todo[];
@@ -12,9 +13,10 @@ interface TodoListProps {
   onToggle: (id: string) => void;
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => void;
+  onDateClick?: (date: Date) => void;
 }
 
-export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDelete }: TodoListProps) {
+export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDelete, onDateClick }: TodoListProps) {
   const getFilteredTodos = () => {
     switch (viewMode) {
       case 'day':
@@ -90,11 +92,11 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 text-slate-400\" fill="none\" stroke="currentColor\" viewBox="0 0 24 24">
-            <path strokeLinecap="round\" strokeLinejoin="round\" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         </div>
-        <h3 className="text-lg font-medium text-slate-900 mb-2">タスクがありません</h3>
+        <h3 className="text-lg font-medium text-slate-900 mb-2">本日はタスクがありません</h3>
         <p className="text-slate-500">新しいタスクを追加してみましょう</p>
       </div>
     );
@@ -121,7 +123,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     );
   }
 
-  // Week view - 横方向表示
+  // Week view - 横方向表示（日付クリック可能）
   if (viewMode === 'week') {
     const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
@@ -138,11 +140,14 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
             
             return (
               <div key={dayKey} className="min-h-0">
-                <div className={`text-center p-2 rounded-lg mb-2 ${
-                  isToday 
-                    ? 'bg-primary-100 text-primary-700 font-medium' 
-                    : 'bg-slate-50 text-slate-600'
-                }`}>
+                <button
+                  onClick={() => onDateClick?.(day)}
+                  className={`w-full text-center p-2 rounded-lg mb-2 transition-all duration-200 hover:scale-105 ${
+                    isToday 
+                      ? 'bg-primary-100 text-primary-700 font-medium hover:bg-primary-200' 
+                      : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
                   <div className="text-xs font-medium">
                     {format(day, 'E', { locale: ja })}
                   </div>
@@ -154,7 +159,10 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                       {dayTodos.length}件
                     </div>
                   )}
-                </div>
+                  <div className="mt-1">
+                    <PlusIcon className="w-3 h-3 mx-auto opacity-50" />
+                  </div>
+                </button>
               </div>
             );
           })}
@@ -195,7 +203,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     );
   }
 
-  // Month view - 週ごとの横方向表示（全ての週を表示）
+  // Month view - 週ごとの横方向表示（全ての週を表示、日付クリック可能）
   if (viewMode === 'month') {
     const monthStart = startOfMonth(selectedDate);
     const monthEnd = endOfMonth(selectedDate);
@@ -235,7 +243,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                 )}
               </div>
 
-              {/* 曜日ヘッダー */}
+              {/* 曜日ヘッダー（クリック可能） */}
               <div className="grid grid-cols-7 gap-2">
                 {days.map(day => {
                   const isToday = isSameDay(day, new Date());
@@ -245,13 +253,16 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                   
                   return (
                     <div key={dayKey} className="min-h-0">
-                      <div className={`text-center p-1 rounded mb-2 text-xs ${
-                        isToday 
-                          ? 'bg-primary-100 text-primary-700 font-medium' 
-                          : isCurrentMonth
-                          ? 'bg-slate-50 text-slate-600'
-                          : 'bg-slate-25 text-slate-400'
-                      }`}>
+                      <button
+                        onClick={() => onDateClick?.(day)}
+                        className={`w-full text-center p-1 rounded mb-2 text-xs transition-all duration-200 hover:scale-105 ${
+                          isToday 
+                            ? 'bg-primary-100 text-primary-700 font-medium hover:bg-primary-200' 
+                            : isCurrentMonth
+                            ? 'bg-slate-50 text-slate-600 hover:bg-slate-100'
+                            : 'bg-slate-25 text-slate-400 hover:bg-slate-50'
+                        }`}
+                      >
                         <div>{format(day, 'E', { locale: ja })}</div>
                         <div>{format(day, 'd')}</div>
                         {dayTodos.length > 0 && (
@@ -259,7 +270,10 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                             {dayTodos.length}
                           </div>
                         )}
-                      </div>
+                        <div className="mt-1">
+                          <PlusIcon className="w-2 h-2 mx-auto opacity-50" />
+                        </div>
+                      </button>
                     </div>
                   );
                 })}

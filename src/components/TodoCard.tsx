@@ -46,8 +46,16 @@ const priorityConfig = {
   }
 };
 
+const statusConfig = {
+  not_started: { label: '未開始', color: 'text-slate-500', bg: 'bg-slate-50' },
+  in_progress: { label: '進行中', color: 'text-blue-600', bg: 'bg-blue-50' },
+  completed: { label: '完了', color: 'text-green-600', bg: 'bg-green-50' },
+  on_hold: { label: '保留', color: 'text-amber-600', bg: 'bg-amber-50' },
+};
+
 export function TodoCard({ todo, onToggle, onEdit, onDelete }: TodoCardProps) {
   const priority = priorityConfig[todo.priority];
+  const status = statusConfig[todo.status];
   const PriorityIcon = priority.icon;
   
   const isOverdue = !todo.completed && todo.dueDate < new Date();
@@ -94,7 +102,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete }: TodoCardProps) {
             </p>
           )}
 
-          <div className="flex items-center justify-between text-xs text-slate-500">
+          <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
             <div className="flex items-center gap-1">
               <ClockIcon className="w-3 h-3" />
               <span className={clsx(
@@ -102,7 +110,11 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete }: TodoCardProps) {
                 isOverdue && !todo.completed && 'text-red-500 font-medium',
                 isDueToday && !todo.completed && 'text-amber-600 font-medium'
               )}>
-                {format(todo.dueDate, 'HH:mm', { locale: ja })}
+                {todo.startTime && todo.endTime ? (
+                  `${format(todo.startTime, 'HH:mm')} - ${format(todo.endTime, 'HH:mm')}`
+                ) : (
+                  format(todo.dueDate, 'HH:mm', { locale: ja })
+                )}
               </span>
             </div>
             
@@ -115,6 +127,17 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete }: TodoCardProps) {
               <PriorityIcon className={clsx('w-2.5 h-2.5', priority.color)} />
               <span className={clsx('text-xs', priority.color)}>{priority.label}</span>
             </div>
+          </div>
+
+          {/* ステータス表示 */}
+          <div className="flex items-center gap-2">
+            <span className={clsx(
+              'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+              status.bg,
+              status.color
+            )}>
+              {status.label}
+            </span>
           </div>
         </div>
 
