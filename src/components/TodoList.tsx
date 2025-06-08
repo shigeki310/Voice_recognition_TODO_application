@@ -168,33 +168,29 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
           })}
         </div>
 
-        {/* タスクカード */}
+        {/* タスクカード - 横並び表示 */}
         <div className="grid grid-cols-7 gap-2 min-h-[400px]">
           {days.map(day => {
             const dayKey = format(day, 'yyyy-MM-dd');
             const dayTodos = (groupedTodos[dayKey] as Todo[]) || [];
             
             return (
-              <div key={dayKey} className="space-y-2 min-h-0">
-                <AnimatePresence mode="popLayout">
-                  {dayTodos.map(todo => (
-                    <motion.div
-                      key={todo.id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      className="transform scale-90"
-                    >
+              <div key={dayKey} className="space-y-1 min-h-0">
+                {/* タスクタイトルを横並びで表示 */}
+                <div className="flex flex-wrap gap-1">
+                  <AnimatePresence mode="popLayout">
+                    {dayTodos.map(todo => (
                       <TodoCard
+                        key={todo.id}
                         todo={todo}
                         onToggle={onToggle}
                         onEdit={onEdit}
                         onDelete={onDelete}
+                        compact={true}
                       />
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
             );
           })}
@@ -244,7 +240,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
               </div>
 
               {/* 曜日ヘッダー（クリック可能） */}
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1">
                 {days.map(day => {
                   const isToday = isSameDay(day, new Date());
                   const isCurrentMonth = day.getMonth() === selectedDate.getMonth();
@@ -255,7 +251,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                     <div key={dayKey} className="min-h-0">
                       <button
                         onClick={() => onDateClick?.(day)}
-                        className={`w-full text-center p-1 rounded mb-2 text-xs transition-all duration-200 hover:scale-105 ${
+                        className={`w-full text-center p-1 rounded mb-1 text-xs transition-all duration-200 hover:scale-105 ${
                           isToday 
                             ? 'bg-primary-100 text-primary-700 font-medium hover:bg-primary-200' 
                             : isCurrentMonth
@@ -279,8 +275,8 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                 })}
               </div>
 
-              {/* タスクカード */}
-              <div className="grid grid-cols-7 gap-2 min-h-[200px]">
+              {/* タスクカード - 横並び表示 */}
+              <div className="grid grid-cols-7 gap-1 min-h-[150px]">
                 {days.map(day => {
                   const dayKey = format(day, 'yyyy-MM-dd');
                   const dayTodos = weekData[dayKey] || [];
@@ -288,25 +284,21 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                   
                   return (
                     <div key={dayKey} className={`space-y-1 min-h-0 ${!isCurrentMonth ? 'opacity-50' : ''}`}>
-                      <AnimatePresence mode="popLayout">
-                        {dayTodos.map(todo => (
-                          <motion.div
-                            key={todo.id}
-                            layout
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="transform scale-75"
-                          >
+                      {/* タスクタイトルを横並びで表示 */}
+                      <div className="flex flex-col gap-1">
+                        <AnimatePresence mode="popLayout">
+                          {dayTodos.map(todo => (
                             <TodoCard
+                              key={todo.id}
                               todo={todo}
                               onToggle={onToggle}
                               onEdit={onEdit}
                               onDelete={onDelete}
+                              compact={true}
                             />
-                          </motion.div>
-                        ))}
-                      </AnimatePresence>
+                          ))}
+                        </AnimatePresence>
+                      </div>
                     </div>
                   );
                 })}

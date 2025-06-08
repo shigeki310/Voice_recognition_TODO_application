@@ -20,6 +20,7 @@ interface TodoCardProps {
   onToggle: (id: string) => void;
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => void;
+  compact?: boolean; // 週・月表示用のコンパクトモード
 }
 
 const priorityConfig = {
@@ -46,13 +47,134 @@ const priorityConfig = {
   }
 };
 
-export function TodoCard({ todo, onToggle, onEdit, onDelete }: TodoCardProps) {
+// タイトルを適切に省略する関数
+const truncateTitle = (title: string, maxLength: number = 10): string => {
+  if (title.length <= maxLength) {
+    return title;
+  }
+  
+  // 10文字で切り取り、適切な区切りを探す
+  const truncated = title.substring(0, maxLength);
+  
+  // 句読点や区切り文字で終わっている場合はそのまま
+  if (/[。、！？\s]$/.test(truncated)) {
+    return truncated + '...';
+  }
+  
+  // 最後の区切り文字を探す
+  const lastPunctuation = Math.max(
+    truncated.lastIndexOf('。'),
+    truncated.lastIndexOf('、'),
+    truncated.lastIndexOf('！'),
+    truncated.lastIndexOf('？'),
+    truncated.lastIndexOf(' ')
+  );
+  
+  if (lastPunctuation > maxLength * 0.6) {
+    return truncated.substring(0, lastPunctuation + 1) + '...';
+  }
+  
+  return truncated + '...';
+};
+
+export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: TodoCardProps) {
   const priority = priorityConfig[todo.priority];
   const PriorityIcon = priority.icon;
   
   const isOverdue = !todo.completed && todo.dueDate < new Date();
   const isDueToday = format(todo.dueDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
+  // コンパクトモード（週・月表示）の場合
+  if (compact) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        whileHover={{ scale: 1.02 }}
+        className={clsx(
+          'p-2 rounded-lg border group cursor-pointer transition-all duration-200',
+          todo.priority === 'high' && 'border-l-2 border-l-red-400 bg-red-50/80',
+          todo.priority === 'medium' && 'border-l-2 border-l-amber-400 bg-amber-50/80',
+          todo.priority === 'low' && 'border-l-2 border-l-green-400 bg-green-50/80',
+          todo.completed && 'opacity-60',
+          'bg-white shadow-sm hover:shadow-md'
+        )}
+        onClick={() => onEdit(todo)}
+      >
+        <div className="flex items-start gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggle(todo.id);
+            }}
+            className="flex-shrink-0 mt-0.5"
+          >
+            {todo.completed ? (
+              <CheckCircleIconSolid className="w-3 h-3 text-green-500" />
+            ) : (
+              <CheckCircleIcon className="w-3 h-3 text-slate-400 hover:text-green-500" />
+            )}
+          </button>
+
+          <div className="flex-1 min-w-0">
+            <h3 
+              className={clsx(
+                'text-xs font-medium leading-tight mb-1',
+                todo.completed ? 'line-through text-slate-500' : 'text-slate-900'
+              )}
+              title={todo.title} // ホバー時に完全なタイトルを表示
+            >
+              {truncateTitle(todo.title, 10)}
+            </h3>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1">
+                <ClockIcon className="w-2 h-2 text-slate-400" />
+                <span className={clsx(
+                  'text-xs',
+                  isOverdue && !todo.completed ? 'text-red-500 font-medium' : 'text-slate-500'
+                )}>
+                  {format(todo.dueDate, 'HH:mm')}
+                </span>
+              </div>
+              
+              <div className={clsx(
+                'flex items-center gap-0.5 px-1 py-0.5 rounded text-xs',
+                priority.bg
+              )}>
+                <PriorityIcon className={clsx('w-2 h-2', priority.color)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(todo);
+              }}
+              className="p-0.5 text-slate-400 hover:text-slate-600 rounded"
+            >
+              <PencilIcon className="w-2.5 h-2.5" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(todo.id);
+              }}
+              className="p-0.5 text-slate-400 hover:text-red-500 rounded"
+            >
+              <TrashIcon className="w-2.5 h-2.5" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // 通常モード（日表示）の場合
   return (
     <motion.div
       layout
