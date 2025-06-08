@@ -86,7 +86,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     ? Object.values(groupedTodos).some(week => Object.values(week as Record<string, Todo[]>).some(todos => todos.length > 0))
     : Object.values(groupedTodos).some(todos => (todos as Todo[]).length > 0);
 
-  if (!hasAnyTodos) {
+  if (!hasAnyTodos && viewMode === 'day') {
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
@@ -195,7 +195,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     );
   }
 
-  // Month view - 週ごとの横方向表示
+  // Month view - 週ごとの横方向表示（全ての週を表示）
   if (viewMode === 'month') {
     const monthStart = startOfMonth(selectedDate);
     const monthEnd = endOfMonth(selectedDate);
@@ -215,8 +215,6 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
             return weekData[dayKey] && weekData[dayKey].length > 0;
           });
 
-          if (!hasTasksThisWeek) return null;
-
           return (
             <motion.div
               key={weekKey}
@@ -230,6 +228,11 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                   {format(weekStart, 'M月d日', { locale: ja })} - {format(weekEnd, 'M月d日', { locale: ja })}
                 </h3>
                 <div className="flex-1 h-px bg-slate-200" />
+                {hasTasksThisWeek && (
+                  <span className="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                    タスクあり
+                  </span>
+                )}
               </div>
 
               {/* 曜日ヘッダー */}
@@ -297,6 +300,19 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
             </motion.div>
           );
         })}
+
+        {/* タスクがない場合のメッセージ（月ビュー用） */}
+        {!hasAnyTodos && (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-slate-400\" fill="none\" stroke="currentColor\" viewBox="0 0 24 24">
+                <path strokeLinecap="round\" strokeLinejoin="round\" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-slate-900 mb-2">今月はタスクがありません</h3>
+            <p className="text-slate-500">新しいタスクを追加してみましょう</p>
+          </div>
+        )}
       </div>
     );
   }
