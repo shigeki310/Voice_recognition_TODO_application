@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  EnvelopeIcon, 
+  UserIcon, 
   LockClosedIcon, 
   EyeIcon, 
   EyeSlashIcon 
@@ -64,28 +64,28 @@ export function LoginForm() {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* メールアドレス */}
+          {/* ユーザー名 */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
-              メールアドレス
+            <label htmlFor="username" className="block text-sm font-medium text-slate-700 mb-2">
+              ユーザー名
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <EnvelopeIcon className="h-5 w-5 text-slate-400" />
+                <UserIcon className="h-5 w-5 text-slate-400" />
               </div>
               <input
-                {...register('email')}
-                type="email"
-                id="email"
+                {...register('username')}
+                type="text"
+                id="username"
                 className={clsx(
                   'block w-full pl-10 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200',
-                  errors.email ? 'border-red-300' : 'border-slate-300'
+                  errors.username ? 'border-red-300' : 'border-slate-300'
                 )}
-                placeholder="メールアドレスを入力"
+                placeholder="ユーザー名を入力"
               />
             </div>
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+            {errors.username && (
+              <p className="mt-1 text-sm text-red-600">{errors.username.message}</p>
             )}
           </div>
 

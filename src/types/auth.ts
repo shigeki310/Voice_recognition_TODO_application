@@ -1,7 +1,6 @@
 export interface User {
   id: string;
   username: string;
-  email: string;
   created_at: string;
   updated_at: string;
 }
@@ -14,13 +13,12 @@ export interface AuthState {
 
 export interface RegisterFormData {
   username: string;
-  email: string;
   password: string;
   confirmPassword: string;
 }
 
 export interface LoginFormData {
-  email: string;
+  username: string;
   password: string;
 }
 

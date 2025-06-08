@@ -14,15 +14,9 @@ export const passwordSchema = z
   .max(32, 'パスワードは32文字以内で入力してください')
   .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'パスワードは半角英大文字、小文字、数字を各1文字以上含む必要があります');
 
-// メールアドレスのバリデーションスキーマ
-export const emailSchema = z
-  .string()
-  .email('有効なメールアドレスを入力してください');
-
 // 登録フォームのバリデーションスキーマ
 export const registerSchema = z.object({
   username: usernameSchema,
-  email: emailSchema,
   password: passwordSchema,
   confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
@@ -32,7 +26,7 @@ export const registerSchema = z.object({
 
 // ログインフォームのバリデーションスキーマ
 export const loginSchema = z.object({
-  email: emailSchema,
+  username: usernameSchema,
   password: z.string().min(1, 'パスワードを入力してください')
 });
 
@@ -57,7 +51,7 @@ export const checkUsernameAvailability = async (username: string): Promise<boole
   const { supabase } = await import('../lib/supabase');
   
   const { data, error } = await supabase
-    .from('profiles')
+    .from('users')
     .select('username')
     .eq('username', username)
     .single();
@@ -68,4 +62,19 @@ export const checkUsernameAvailability = async (username: string): Promise<boole
   }
 
   return !data;
+};
+
+// パスワードハッシュ化（簡易版 - 本番環境では適切なライブラリを使用）
+export const hashPassword = async (password: string): Promise<string> => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + 'voice_todo_salt');
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
+
+// パスワード検証
+export const verifyPassword = async (password: string, hash: string): Promise<boolean> => {
+  const hashedInput = await hashPassword(password);
+  return hashedInput === hash;
 };

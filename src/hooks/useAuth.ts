@@ -1,8 +1,7 @@
 import { useState, useEffect, createContext, useContext } from 'react';
-import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { User, AuthState, RegisterFormData, LoginFormData } from '../types/auth';
-import { sanitizeInput, checkUsernameAvailability } from '../utils/validation';
+import { sanitizeInput, checkUsernameAvailability, hashPassword, verifyPassword } from '../utils/validation';
 
 const AuthContext = createContext<{
   authState: AuthState;
@@ -28,57 +27,24 @@ export const useAuthProvider = () => {
   });
 
   useEffect(() => {
-    // 初期認証状態の確認
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        await loadUserProfile(session.user);
+    // ローカルストレージから認証状態を復元
+    const loadAuthState = () => {
+      const storedUser = localStorage.getItem('voice_todo_user');
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          setAuthState({ user, loading: false, error: null });
+        } catch (error) {
+          localStorage.removeItem('voice_todo_user');
+          setAuthState({ user: null, loading: false, error: null });
+        }
       } else {
-        setAuthState(prev => ({ ...prev, loading: false }));
+        setAuthState({ user: null, loading: false, error: null });
       }
     };
 
-    getInitialSession();
-
-    // 認証状態の変更を監視
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session?.user) {
-          await loadUserProfile(session.user);
-        } else {
-          setAuthState({ user: null, loading: false, error: null });
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    loadAuthState();
   }, []);
-
-  const loadUserProfile = async (supabaseUser: SupabaseUser) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (error) throw error;
-
-      const user: User = {
-        id: profile.id,
-        username: profile.username,
-        email: profile.email,
-        created_at: profile.created_at,
-        updated_at: profile.updated_at
-      };
-
-      setAuthState({ user, loading: false, error: null });
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      setAuthState({ user: null, loading: false, error: 'プロフィールの読み込みに失敗しました' });
-    }
-  };
 
   const register = async (data: RegisterFormData): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -86,7 +52,6 @@ export const useAuthProvider = () => {
 
       // 入力値のサニタイズ
       const sanitizedUsername = sanitizeInput(data.username);
-      const sanitizedEmail = sanitizeInput(data.email);
 
       // ユーザー名の重複チェック
       const isUsernameAvailable = await checkUsernameAvailability(sanitizedUsername);
@@ -95,35 +60,32 @@ export const useAuthProvider = () => {
         return { success: false, error: 'このユーザー名は既に使用されています' };
       }
 
-      // Supabase Authでユーザー登録
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: sanitizedEmail,
-        password: data.password,
-        options: {
-          data: {
-            username: sanitizedUsername
-          }
-        }
-      });
+      // パスワードのハッシュ化
+      const passwordHash = await hashPassword(data.password);
 
-      if (authError) throw authError;
+      // ユーザー登録
+      const { data: userData, error } = await supabase
+        .from('users')
+        .insert({
+          username: sanitizedUsername,
+          password_hash: passwordHash
+        })
+        .select()
+        .single();
 
-      if (authData.user) {
-        // プロフィールテーブルにユーザー情報を保存
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: authData.user.id,
-            username: sanitizedUsername,
-            email: sanitizedEmail
-          });
+      if (error) throw error;
 
-        if (profileError) throw profileError;
+      const user: User = {
+        id: userData.id,
+        username: userData.username,
+        created_at: userData.created_at,
+        updated_at: userData.updated_at
+      };
 
-        return { success: true };
-      }
+      setAuthState({ user, loading: false, error: null });
+      localStorage.setItem('voice_todo_user', JSON.stringify(user));
 
-      throw new Error('ユーザー登録に失敗しました');
+      return { success: true };
     } catch (error: any) {
       const errorMessage = error.message || 'ユーザー登録に失敗しました';
       setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
@@ -135,12 +97,36 @@ export const useAuthProvider = () => {
     try {
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: sanitizeInput(data.email),
-        password: data.password
-      });
+      const sanitizedUsername = sanitizeInput(data.username);
 
-      if (error) throw error;
+      // ユーザー情報を取得
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('username', sanitizedUsername)
+        .single();
+
+      if (error || !userData) {
+        setAuthState(prev => ({ ...prev, loading: false, error: 'ユーザー名またはパスワードが正しくありません' }));
+        return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+      }
+
+      // パスワード検証
+      const isPasswordValid = await verifyPassword(data.password, userData.password_hash);
+      if (!isPasswordValid) {
+        setAuthState(prev => ({ ...prev, loading: false, error: 'ユーザー名またはパスワードが正しくありません' }));
+        return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+      }
+
+      const user: User = {
+        id: userData.id,
+        username: userData.username,
+        created_at: userData.created_at,
+        updated_at: userData.updated_at
+      };
+
+      setAuthState({ user, loading: false, error: null });
+      localStorage.setItem('voice_todo_user', JSON.stringify(user));
 
       return { success: true };
     } catch (error: any) {
@@ -152,8 +138,8 @@ export const useAuthProvider = () => {
 
   const logout = async (): Promise<void> => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      setAuthState({ user: null, loading: false, error: null });
+      localStorage.removeItem('voice_todo_user');
     } catch (error) {
       console.error('Logout error:', error);
     }
