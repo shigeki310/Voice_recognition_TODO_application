@@ -36,11 +36,11 @@ export const sanitizeInput = (input: string): string => {
     .trim()
     .replace(/[<>\"'&]/g, (match) => {
       const escapeMap: Record<string, string> = {
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#x27;',
-        '&': '&amp;'
+        '<': '<',
+        '>': '>',
+        '"': '"',
+        "'": ''',
+        '&': '&'
       };
       return escapeMap[match] || match;
     });
@@ -54,14 +54,14 @@ export const checkUsernameAvailability = async (username: string): Promise<boole
     .from('users')
     .select('username')
     .eq('username', username)
-    .single();
+    .limit(1);
 
-  if (error && error.code === 'PGRST116') {
-    // レコードが見つからない場合は利用可能
-    return true;
+  if (error) {
+    throw error;
   }
 
-  return !data;
+  // データが空の配列の場合、ユーザー名は利用可能
+  return data.length === 0;
 };
 
 // パスワードハッシュ化（簡易版 - 本番環境では適切なライブラリを使用）
