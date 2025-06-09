@@ -9,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { User } from '../../types/auth';
 import { PasswordChangeData } from '../../types/settings';
+import { useAuth } from '../../hooks/useAuth';
 import clsx from 'clsx';
 
 interface AccountSectionProps {
@@ -16,6 +17,7 @@ interface AccountSectionProps {
 }
 
 export function AccountSection({ user }: AccountSectionProps) {
+  const { changePassword, deleteAccount } = useAuth();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [passwordData, setPasswordData] = useState<PasswordChangeData>({
@@ -29,22 +31,47 @@ export function AccountSection({ user }: AccountSectionProps) {
     confirm: false
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handlePasswordChange = async () => {
+    setError(null);
+    setSuccess(null);
+
+    // バリデーション
+    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
+      setError('すべてのフィールドを入力してください');
+      return;
+    }
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      alert('新しいパスワードが一致しません');
+      setError('新しいパスワードが一致しません');
+      return;
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      setError('新しいパスワードは8文字以上で入力してください');
+      return;
+    }
+
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(passwordData.newPassword)) {
+      setError('新しいパスワードは半角英大文字、小文字、数字を各1文字以上含む必要があります');
       return;
     }
 
     setLoading(true);
     try {
-      // パスワード変更処理
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 模擬API呼び出し
-      alert('パスワードが変更されました');
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-      setShowPasswordForm(false);
+      const result = await changePassword(passwordData.currentPassword, passwordData.newPassword);
+      
+      if (result.success) {
+        setSuccess('パスワードが変更されました');
+        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        setShowPasswordForm(false);
+      } else {
+        setError(result.error || 'パスワードの変更に失敗しました');
+      }
     } catch (error) {
-      alert('パスワードの変更に失敗しました');
+      setError('パスワードの変更に失敗しました');
     } finally {
       setLoading(false);
     }
@@ -53,11 +80,15 @@ export function AccountSection({ user }: AccountSectionProps) {
   const handleAccountDelete = async () => {
     setLoading(true);
     try {
-      // アカウント削除処理
-      await new Promise(resolve => setTimeout(resolve, 1000)); // 模擬API呼び出し
-      alert('アカウントが削除されました');
+      const result = await deleteAccount();
+      
+      if (result.success) {
+        // アカウント削除成功時は自動的にログアウトされる
+      } else {
+        setError(result.error || 'アカウントの削除に失敗しました');
+      }
     } catch (error) {
-      alert('アカウントの削除に失敗しました');
+      setError('アカウントの削除に失敗しました');
     } finally {
       setLoading(false);
       setShowDeleteConfirm(false);
@@ -66,6 +97,13 @@ export function AccountSection({ user }: AccountSectionProps) {
 
   const togglePasswordVisibility = (field: keyof typeof showPasswords) => {
     setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const resetForm = () => {
+    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setError(null);
+    setSuccess(null);
+    setShowPasswordForm(false);
   };
 
   return (
@@ -78,6 +116,20 @@ export function AccountSection({ user }: AccountSectionProps) {
       <div>
         <h2 className="text-lg font-semibold text-slate-900 mb-4">アカウント設定</h2>
         
+        {/* 成功メッセージ */}
+        {success && (
+          <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-3">
+            <p className="text-sm text-green-600">{success}</p>
+          </div>
+        )}
+
+        {/* エラーメッセージ */}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
+        )}
+        
         {/* パスワード変更 */}
         <div className="bg-white border border-slate-200 rounded-lg p-4 mb-4">
           <div className="flex items-center justify-between mb-3">
@@ -86,7 +138,7 @@ export function AccountSection({ user }: AccountSectionProps) {
               <h3 className="font-medium text-slate-900">パスワード変更</h3>
             </div>
             <button
-              onClick={() => setShowPasswordForm(!showPasswordForm)}
+              onClick={() => showPasswordForm ? resetForm() : setShowPasswordForm(true)}
               className="text-sm text-primary-600 hover:text-primary-700 font-medium"
             >
               {showPasswordForm ? 'キャンセル' : '変更する'}
@@ -152,6 +204,9 @@ export function AccountSection({ user }: AccountSectionProps) {
                     )}
                   </button>
                 </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  8-32文字、英大文字・小文字・数字を各1文字以上
+                </p>
               </div>
 
               {/* パスワード確認 */}

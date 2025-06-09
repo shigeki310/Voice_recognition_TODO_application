@@ -9,6 +9,8 @@ const AuthContext = createContext<{
   login: (data: LoginFormData) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkUsername: (username: string) => Promise<boolean>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
+  deleteAccount: () => Promise<{ success: boolean; error?: string }>;
 } | null>(null);
 
 export const useAuth = () => {
@@ -149,12 +151,107 @@ export const useAuthProvider = () => {
     return await checkUsernameAvailability(sanitizeInput(username));
   };
 
+  const changePassword = async (currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (!authState.user) {
+        return { success: false, error: 'ユーザーがログインしていません' };
+      }
+
+      // 現在のパスワードを検証
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('password_hash')
+        .eq('id', authState.user.id)
+        .single();
+
+      if (fetchError || !userData) {
+        return { success: false, error: 'ユーザー情報の取得に失敗しました' };
+      }
+
+      const isCurrentPasswordValid = await verifyPassword(currentPassword, userData.password_hash);
+      if (!isCurrentPasswordValid) {
+        return { success: false, error: '現在のパスワードが正しくありません' };
+      }
+
+      // 新しいパスワードをハッシュ化
+      const newPasswordHash = await hashPassword(newPassword);
+
+      // パスワードを更新
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          password_hash: newPasswordHash,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', authState.user.id);
+
+      if (updateError) {
+        console.error('Password update error:', updateError);
+        return { success: false, error: 'パスワードの更新に失敗しました' };
+      }
+
+      // ローカルストレージのユーザー情報を更新
+      const updatedUser = {
+        ...authState.user,
+        updated_at: new Date().toISOString()
+      };
+      setAuthState(prev => ({ ...prev, user: updatedUser }));
+      localStorage.setItem('voice_todo_user', JSON.stringify(updatedUser));
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      return { success: false, error: error.message || 'パスワードの変更に失敗しました' };
+    }
+  };
+
+  const deleteAccount = async (): Promise<{ success: boolean; error?: string }> => {
+    try {
+      if (!authState.user) {
+        return { success: false, error: 'ユーザーがログインしていません' };
+      }
+
+      // ユーザーに関連するTODOを削除（CASCADE設定により自動削除されるが、明示的に実行）
+      const { error: todosDeleteError } = await supabase
+        .from('todos')
+        .delete()
+        .eq('user_id', authState.user.id);
+
+      if (todosDeleteError) {
+        console.error('Todos delete error:', todosDeleteError);
+        return { success: false, error: 'データの削除に失敗しました' };
+      }
+
+      // ユーザーアカウントを削除
+      const { error: userDeleteError } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', authState.user.id);
+
+      if (userDeleteError) {
+        console.error('User delete error:', userDeleteError);
+        return { success: false, error: 'アカウントの削除に失敗しました' };
+      }
+
+      // ローカル状態をクリア
+      setAuthState({ user: null, loading: false, error: null });
+      localStorage.removeItem('voice_todo_user');
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      return { success: false, error: error.message || 'アカウントの削除に失敗しました' };
+    }
+  };
+
   return {
     authState,
     register,
     login,
     logout,
-    checkUsername
+    checkUsername,
+    changePassword,
+    deleteAccount
   };
 };
 
