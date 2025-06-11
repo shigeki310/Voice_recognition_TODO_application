@@ -71,17 +71,6 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
     };
   }, [todos, scheduleReminder, cancelAllReminders, permission]);
 
-  // 開発モードでのデバッグ情報表示
-  if (process.env.NODE_ENV === 'development') {
-    return (
-      <div className="fixed bottom-20 left-4 bg-black/80 text-white p-2 rounded text-xs z-50">
-        <div>通知: {supported ? '対応' : '非対応'}</div>
-        <div>許可: {permission}</div>
-        <div>スケジュール済み: {scheduledCount}</div>
-        <div>リマインダー有効: {todos.filter(t => t.reminderEnabled).length}</div>
-      </div>
-    );
-  }
-
+  // このコンポーネントは何も表示しない
   return null;
 }
