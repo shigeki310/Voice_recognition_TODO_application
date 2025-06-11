@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { Todo, Priority } from '../types/todo';
+import { Todo, Priority, RepeatType } from '../types/todo';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
@@ -47,6 +47,10 @@ export function useTodos() {
         completed: todo.completed,
         priority: todo.priority as Priority,
         dueDate: new Date(todo.due_date),
+        dueTime: todo.due_time || undefined,
+        reminderEnabled: todo.reminder_enabled || false,
+        reminderTime: todo.reminder_time || undefined,
+        repeatType: (todo.repeat_type as RepeatType) || 'none',
         createdAt: new Date(todo.created_at),
         updatedAt: new Date(todo.updated_at)
       }));
@@ -69,7 +73,11 @@ export function useTodos() {
     title: string, 
     description?: string, 
     priority: Priority = 'medium', 
-    dueDate?: Date
+    dueDate?: Date,
+    dueTime?: string,
+    reminderEnabled?: boolean,
+    reminderTime?: number,
+    repeatType?: RepeatType
   ) => {
     if (!authState.user) return null;
 
@@ -80,7 +88,11 @@ export function useTodos() {
         description: description || null,
         completed: false,
         priority,
-        due_date: (dueDate || new Date()).toISOString()
+        due_date: (dueDate || new Date()).toISOString(),
+        due_time: dueTime || null,
+        reminder_enabled: reminderEnabled || false,
+        reminder_time: reminderTime || null,
+        repeat_type: repeatType || 'none'
       };
 
       const { data, error } = await supabase
@@ -101,6 +113,10 @@ export function useTodos() {
         completed: data.completed,
         priority: data.priority as Priority,
         dueDate: new Date(data.due_date),
+        dueTime: data.due_time || undefined,
+        reminderEnabled: data.reminder_enabled || false,
+        reminderTime: data.reminder_time || undefined,
+        repeatType: (data.repeat_type as RepeatType) || 'none',
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at)
       };
@@ -126,6 +142,10 @@ export function useTodos() {
       if (updates.completed !== undefined) updateData.completed = updates.completed;
       if (updates.priority !== undefined) updateData.priority = updates.priority;
       if (updates.dueDate !== undefined) updateData.due_date = updates.dueDate.toISOString();
+      if (updates.dueTime !== undefined) updateData.due_time = updates.dueTime || null;
+      if (updates.reminderEnabled !== undefined) updateData.reminder_enabled = updates.reminderEnabled;
+      if (updates.reminderTime !== undefined) updateData.reminder_time = updates.reminderTime || null;
+      if (updates.repeatType !== undefined) updateData.repeat_type = updates.repeatType;
 
       const { error } = await supabase
         .from('todos')

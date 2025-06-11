@@ -10,7 +10,9 @@ import {
   TrashIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
-  CheckIcon
+  CheckIcon,
+  ClockIcon,
+  BellIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
@@ -84,6 +86,16 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
   const isOverdue = !todo.completed && todo.dueDate < new Date();
   const isDueToday = format(todo.dueDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
+  // 時刻表示の準備
+  const getTimeDisplay = () => {
+    if (todo.dueTime) {
+      return todo.dueTime;
+    }
+    return null;
+  };
+
+  const timeDisplay = getTimeDisplay();
+
   // コンパクトモード（週・月表示）の場合
   if (compact) {
     return (
@@ -137,14 +149,24 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
                   isOverdue && !todo.completed ? 'text-red-500 font-medium' : 'text-slate-500'
                 )}>
                   {format(todo.dueDate, 'M/d', { locale: ja })}
+                  {timeDisplay && (
+                    <span className="ml-1 text-xs">
+                      {timeDisplay}
+                    </span>
+                  )}
                 </span>
               </div>
               
-              <div className={clsx(
-                'flex items-center gap-0.5 px-1 py-0.5 rounded text-xs',
-                priority.bg
-              )}>
-                <PriorityIcon className={clsx('w-2 h-2', priority.color)} />
+              <div className="flex items-center gap-0.5">
+                {todo.reminderEnabled && (
+                  <BellIcon className="w-2 h-2 text-blue-500" />
+                )}
+                <div className={clsx(
+                  'flex items-center gap-0.5 px-1 py-0.5 rounded text-xs',
+                  priority.bg
+                )}>
+                  <PriorityIcon className={clsx('w-2 h-2', priority.color)} />
+                </div>
               </div>
             </div>
           </div>
@@ -224,6 +246,12 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
                 isDueToday && !todo.completed && 'text-amber-600 font-medium'
               )}>
                 {format(todo.dueDate, 'M月d日', { locale: ja })}
+                {timeDisplay && (
+                  <span className="ml-2 flex items-center gap-1">
+                    <ClockIcon className="w-3 h-3" />
+                    {timeDisplay}
+                  </span>
+                )}
               </span>
             </div>
             
@@ -236,6 +264,15 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               <PriorityIcon className={clsx('w-3 h-3', priority.color)} />
               <span className={priority.color}>{priority.label}</span>
             </div>
+
+            {todo.reminderEnabled && (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200">
+                <BellIcon className="w-3 h-3 text-blue-500" />
+                <span className="text-blue-600">
+                  {todo.reminderTime}分前
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

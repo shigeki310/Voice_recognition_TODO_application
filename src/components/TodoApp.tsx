@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { ViewMode } from '../types/todo';
+import { ViewMode, RepeatType } from '../types/todo';
 import { useTodos } from '../hooks/useTodos';
 import { Header } from './Header';
 import { TodoList } from './TodoList';
 import { TodoForm } from './TodoForm';
 import { VoiceButton } from './VoiceButton';
+import { ReminderManager } from './ReminderManager';
 import { LoadingSpinner } from './ui/LoadingSpinner';
 
 export function TodoApp() {
@@ -44,16 +45,38 @@ export function TodoApp() {
     setSelectedDate(date);
   };
 
-  const handleFormSubmit = (title, description, priority, dueDate) => {
+  const handleFormSubmit = (
+    title: string, 
+    description?: string, 
+    priority?: any, 
+    dueDate?: Date,
+    dueTime?: string,
+    reminderEnabled?: boolean,
+    reminderTime?: number,
+    repeatType?: RepeatType
+  ) => {
     if (editingTodo) {
       updateTodo(editingTodo.id, {
         title,
         description,
         priority,
         dueDate,
+        dueTime,
+        reminderEnabled,
+        reminderTime,
+        repeatType,
       });
     } else {
-      addTodo(title, description, priority, dueDate);
+      addTodo(
+        title, 
+        description, 
+        priority, 
+        dueDate,
+        dueTime,
+        reminderEnabled,
+        reminderTime,
+        repeatType
+      );
     }
   };
 
@@ -108,6 +131,9 @@ export function TodoApp() {
       </AnimatePresence>
 
       <VoiceButton onTranscript={handleVoiceTranscript} />
+      
+      {/* リマインダー管理コンポーネント */}
+      <ReminderManager todos={todos} />
     </div>
   );
 }
