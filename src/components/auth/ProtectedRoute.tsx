@@ -20,7 +20,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   // 認証されていない場合はログインページにリダイレクト
   if (!authState.user) {
     console.log('ProtectedRoute: 未認証のためログインページにリダイレクト');
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login\" state={{ from: location }} replace />;
   }
 
   // 認証済みの場合は子コンポーネントを表示
