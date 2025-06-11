@@ -14,16 +14,17 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
     requestPermission, 
     permission,
     supported,
-    scheduledCount
+    scheduledCount,
+    notificationInterval
   } = useNotifications();
 
   useEffect(() => {
-    // 通知許可を要求
+    // 通知許可を要求（初回のみ）
     if (permission === 'default' && supported) {
       console.log('通知許可を要求します');
       requestPermission().then(granted => {
         if (granted) {
-          console.log('通知許可が取得されました');
+          console.log('通知許可が取得されました - 1時間間隔でリマインダーを管理します');
         } else {
           console.warn('通知許可が拒否されました');
         }
@@ -36,7 +37,8 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       totalTodos: todos.length,
       todosWithReminders: todos.filter(t => t.reminderEnabled).length,
       permission,
-      supported
+      supported,
+      notificationIntervalHours: notificationInterval / (1000 * 60 * 60)
     });
 
     // 既存のリマインダーをすべてキャンセル
@@ -48,14 +50,32 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       return;
     }
 
-    // 有効なリマインダーをスケジュール
-    const activeReminders = todos.filter(todo => 
-      todo.reminderEnabled && 
-      !todo.completed && 
-      todo.reminderTime
-    );
+    // 有効なリマインダーをスケジュール（1時間以上先のもののみ）
+    const activeReminders = todos.filter(todo => {
+      if (!todo.reminderEnabled || todo.completed || !todo.reminderTime) {
+        return false;
+      }
 
-    console.log('アクティブなリマインダー:', activeReminders.length);
+      // リマインダー時刻を計算
+      const now = new Date();
+      let reminderTime: Date;
+
+      if (todo.dueTime) {
+        const [hours, minutes] = todo.dueTime.split(':').map(Number);
+        const dueDateTime = new Date(todo.dueDate);
+        dueDateTime.setHours(hours, minutes, 0, 0);
+        reminderTime = new Date(dueDateTime.getTime() - (todo.reminderTime * 60 * 1000));
+      } else {
+        reminderTime = new Date(todo.dueDate.getTime() - (todo.reminderTime * 60 * 1000));
+      }
+
+      const timeUntilReminder = reminderTime.getTime() - now.getTime();
+      
+      // 1時間以上先のリマインダーのみを対象とする
+      return timeUntilReminder >= notificationInterval;
+    });
+
+    console.log(`アクティブなリマインダー（1時間以上先）: ${activeReminders.length}件`);
 
     activeReminders.forEach(todo => {
       const timeoutId = scheduleReminder(todo);
@@ -69,7 +89,7 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       console.log('ReminderManager: クリーンアップを実行');
       cancelAllReminders();
     };
-  }, [todos, scheduleReminder, cancelAllReminders, permission]);
+  }, [todos, scheduleReminder, cancelAllReminders, permission, notificationInterval]);
 
   // このコンポーネントは何も表示しない
   return null;

@@ -104,6 +104,23 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
     testNotification(todo);
   };
 
+  // リマインダー表示の準備
+  const getReminderDisplay = () => {
+    if (!todo.reminderEnabled || !todo.reminderTime) return null;
+    
+    if (todo.reminderTime >= 1440) {
+      const days = Math.floor(todo.reminderTime / 1440);
+      return `${days}日前`;
+    } else if (todo.reminderTime >= 60) {
+      const hours = Math.floor(todo.reminderTime / 60);
+      return `${hours}時間前`;
+    } else {
+      return `${todo.reminderTime}分前`;
+    }
+  };
+
+  const reminderDisplay = getReminderDisplay();
+
   // コンパクトモード（週・月表示）の場合
   if (compact) {
     return (
@@ -167,7 +184,10 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               
               <div className="flex items-center gap-0.5">
                 {todo.reminderEnabled && (
-                  <BellIcon className="w-2 h-2 text-blue-500" />
+                  <div className="flex items-center gap-0.5 px-1 py-0.5 rounded text-xs bg-blue-50">
+                    <BellIcon className="w-2 h-2 text-blue-500" />
+                    <span className="text-blue-600 text-xs">{reminderDisplay}</span>
+                  </div>
                 )}
                 <div className={clsx(
                   'flex items-center gap-0.5 px-1 py-0.5 rounded text-xs',
@@ -184,6 +204,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               <button
                 onClick={handleTestNotification}
                 className="p-0.5 text-blue-400 hover:text-blue-600 rounded"
+                title="テスト通知"
               >
                 <BellIcon className="w-2.5 h-2.5" />
               </button>
@@ -254,7 +275,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
             </p>
           )}
 
-          <div className="flex items-center gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
             <div className="flex items-center gap-1">
               <CalendarIcon className="w-3 h-3" />
               <span className={clsx(
@@ -281,11 +302,11 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               <span className={priority.color}>{priority.label}</span>
             </div>
 
-            {todo.reminderEnabled && (
+            {todo.reminderEnabled && reminderDisplay && (
               <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200">
                 <BellIcon className="w-3 h-3 text-blue-500" />
                 <span className="text-blue-600">
-                  {todo.reminderTime}分前
+                  {reminderDisplay}
                 </span>
               </div>
             )}
@@ -297,6 +318,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
             <button
               onClick={handleTestNotification}
               className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+              title="テスト通知"
             >
               <BellIcon className="w-4 h-4" />
             </button>

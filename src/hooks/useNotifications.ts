@@ -18,6 +18,10 @@ export function useNotifications() {
   });
 
   const [scheduledReminders, setScheduledReminders] = useState<ScheduledReminder[]>([]);
+  const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
+
+  // 通知間隔を1時間（3600000ミリ秒）に設定
+  const NOTIFICATION_INTERVAL = 60 * 60 * 1000; // 1時間
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -68,6 +72,13 @@ export function useNotifications() {
       return null;
     }
 
+    // 通知間隔チェック（1時間以内の重複通知を防ぐ）
+    const now = Date.now();
+    if (now - lastNotificationTime < NOTIFICATION_INTERVAL) {
+      console.log('通知間隔が短すぎるため、通知をスキップしました');
+      return null;
+    }
+
     try {
       const notification = new Notification(title, {
         icon: '/vite.svg',
@@ -78,6 +89,7 @@ export function useNotifications() {
       });
 
       console.log('通知を表示しました:', title);
+      setLastNotificationTime(now);
 
       // 通知クリック時の処理
       notification.onclick = () => {
@@ -96,7 +108,7 @@ export function useNotifications() {
       console.error('通知の表示に失敗しました:', error);
       return null;
     }
-  }, [state.permission, state.supported]);
+  }, [state.permission, state.supported, lastNotificationTime, NOTIFICATION_INTERVAL]);
 
   const scheduleReminder = useCallback((todo: Todo) => {
     if (!todo.reminderEnabled || !todo.reminderTime) {
@@ -129,23 +141,18 @@ export function useNotifications() {
 
     if (reminderTime <= now) {
       console.log('リマインダー時刻が既に過ぎています:', todo.title);
-      
-      // テスト用：即座に通知を表示
-      if (process.env.NODE_ENV === 'development') {
-        console.log('開発モード：即座に通知を表示します');
-        setTimeout(() => {
-          showNotification(`リマインダー: ${todo.title}`, {
-            body: todo.description || '期限が近づいています',
-            tag: `reminder-${todo.id}`,
-          });
-        }, 1000);
-      }
-      
       return null;
     }
 
     const timeUntilReminder = reminderTime.getTime() - now.getTime();
-    console.log(`リマインダーを${Math.round(timeUntilReminder / 1000)}秒後にスケジュールしました:`, todo.title);
+    
+    // 1時間未満の場合はスケジュールしない
+    if (timeUntilReminder < NOTIFICATION_INTERVAL) {
+      console.log(`リマインダー時刻まで1時間未満のため、スケジュールしません: ${todo.title}`);
+      return null;
+    }
+
+    console.log(`リマインダーを${Math.round(timeUntilReminder / 1000 / 60)}分後にスケジュールしました:`, todo.title);
 
     const timeoutId = window.setTimeout(() => {
       console.log('リマインダー通知を表示:', todo.title);
@@ -169,7 +176,7 @@ export function useNotifications() {
     ]);
 
     return timeoutId;
-  }, [showNotification]);
+  }, [showNotification, NOTIFICATION_INTERVAL]);
 
   const cancelReminder = useCallback((todoId: string) => {
     const reminder = scheduledReminders.find(r => r.todoId === todoId);
@@ -190,14 +197,30 @@ export function useNotifications() {
     console.log('すべてのリマインダーをキャンセルしました');
   }, [scheduledReminders]);
 
-  // テスト用の即座通知機能
+  // テスト用の即座通知機能（開発モードでのみ有効）
   const testNotification = useCallback((todo: Todo) => {
+    if (process.env.NODE_ENV !== 'development') {
+      console.log('テスト通知は開発モードでのみ利用可能です');
+      return;
+    }
+    
     console.log('テスト通知を表示:', todo.title);
-    showNotification(`テスト通知: ${todo.title}`, {
+    // テスト通知は間隔制限を無視
+    const notification = new Notification(`テスト通知: ${todo.title}`, {
       body: todo.description || 'これはテスト通知です',
       tag: `test-${todo.id}`,
+      icon: '/vite.svg',
     });
-  }, [showNotification]);
+
+    notification.onclick = () => {
+      window.focus();
+      notification.close();
+    };
+
+    setTimeout(() => {
+      notification.close();
+    }, 5000);
+  }, []);
 
   return {
     ...state,
@@ -207,6 +230,7 @@ export function useNotifications() {
     cancelReminder,
     cancelAllReminders,
     testNotification,
-    scheduledCount: scheduledReminders.length
+    scheduledCount: scheduledReminders.length,
+    notificationInterval: NOTIFICATION_INTERVAL
   };
 }
