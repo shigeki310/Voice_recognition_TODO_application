@@ -1,38 +1,64 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Todo, Priority } from '../types/todo';
-import { XMarkIcon, CalendarIcon, FlagIcon } from '@heroicons/react/24/outline';
+import { Todo, Priority, RepeatType } from '../types/todo';
+import { XMarkIcon, CalendarIcon, FlagIcon, ClockIcon, ArrowPathIcon, BellIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
 
 interface TodoFormProps {
   todo?: Todo;
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (title: string, description?: string, priority?: Priority, dueDate?: Date) => void;
+  onSubmit: (
+    title: string, 
+    description?: string, 
+    priority?: Priority, 
+    dueDate?: Date,
+    dueTime?: string,
+    reminderEnabled?: boolean,
+    reminderTime?: number,
+    repeatType?: RepeatType
+  ) => void;
   initialTitle?: string;
   selectedDate?: Date;
 }
 
-export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, selectedDate }: TodoFormProps) {
+export function TodoForm({ 
+  todo, 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  initialTitle, 
+  selectedDate 
+}: TodoFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<Priority>('medium');
   const [dueDate, setDueDate] = useState('');
+  const [dueTime, setDueTime] = useState('');
+  const [reminderEnabled, setReminderEnabled] = useState(false);
+  const [reminderTime, setReminderTime] = useState(15); // 15分前がデフォルト
+  const [repeatType, setRepeatType] = useState<RepeatType>('none');
 
   useEffect(() => {
     if (todo) {
       setTitle(todo.title);
       setDescription(todo.description || '');
       setPriority(todo.priority);
-      // 日付のみを設定（時間は除外）
       setDueDate(format(todo.dueDate, "yyyy-MM-dd"));
+      setDueTime(todo.dueTime || '');
+      setReminderEnabled(todo.reminderEnabled || false);
+      setReminderTime(todo.reminderTime || 15);
+      setRepeatType(todo.repeatType || 'none');
     } else {
       setTitle(initialTitle || '');
       setDescription('');
       setPriority('medium');
-      // selectedDateが指定されている場合はその日付を使用、そうでなければ現在日付
       const baseDate = selectedDate || new Date();
       setDueDate(format(baseDate, "yyyy-MM-dd"));
+      setDueTime('');
+      setReminderEnabled(false);
+      setReminderTime(15);
+      setRepeatType('none');
     }
   }, [todo, initialTitle, selectedDate, isOpen]);
 
@@ -40,14 +66,23 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
     e.preventDefault();
     if (!title.trim()) return;
 
-    // 日付文字列から日付オブジェクトを作成（時間は00:00:00に設定）
-    const dueDateObj = new Date(dueDate + 'T00:00:00');
+    // 日付と時刻を組み合わせて Date オブジェクトを作成
+    let dueDateObj: Date;
+    if (dueTime) {
+      dueDateObj = new Date(`${dueDate}T${dueTime}:00`);
+    } else {
+      dueDateObj = new Date(dueDate + 'T00:00:00');
+    }
 
     onSubmit(
       title.trim(),
       description.trim() || undefined,
       priority,
-      dueDateObj
+      dueDateObj,
+      dueTime || undefined,
+      reminderEnabled,
+      reminderTime,
+      repeatType
     );
     
     if (!todo) {
@@ -56,6 +91,10 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
       setPriority('medium');
       const baseDate = selectedDate || new Date();
       setDueDate(format(baseDate, "yyyy-MM-dd"));
+      setDueTime('');
+      setReminderEnabled(false);
+      setReminderTime(15);
+      setRepeatType('none');
     }
     
     onClose();
@@ -75,7 +114,7 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-slate-200">
@@ -91,6 +130,7 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* タイトル */}
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-2">
               タイトル
@@ -107,6 +147,7 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
             />
           </div>
 
+          {/* 説明 */}
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-2">
               説明（任意）
@@ -121,6 +162,7 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
             />
           </div>
 
+          {/* 優先度と期限日 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="priority" className="block text-sm font-medium text-slate-700 mb-2">
@@ -153,6 +195,90 @@ export function TodoForm({ todo, isOpen, onClose, onSubmit, initialTitle, select
                 required
               />
             </div>
+          </div>
+
+          {/* 時刻指定 */}
+          <div>
+            <label htmlFor="dueTime" className="block text-sm font-medium text-slate-700 mb-2">
+              <ClockIcon className="w-4 h-4 inline mr-1" />
+              時刻（任意）
+            </label>
+            <input
+              type="time"
+              id="dueTime"
+              value={dueTime}
+              onChange={(e) => setDueTime(e.target.value)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+            />
+          </div>
+
+          {/* リマインダー設定 */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <BellIcon className="w-4 h-4" />
+                リマインダー
+              </label>
+              <button
+                type="button"
+                onClick={() => setReminderEnabled(!reminderEnabled)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
+                  reminderEnabled ? 'bg-primary-600' : 'bg-slate-200'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                    reminderEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {reminderEnabled && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="space-y-3"
+              >
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">
+                    通知タイミング
+                  </label>
+                  <select
+                    value={reminderTime}
+                    onChange={(e) => setReminderTime(Number(e.target.value))}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+                  >
+                    <option value={5}>5分前</option>
+                    <option value={15}>15分前</option>
+                    <option value={30}>30分前</option>
+                    <option value={60}>1時間前</option>
+                    <option value={1440}>1日前</option>
+                  </select>
+                </div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* 繰り返し設定 */}
+          <div>
+            <label htmlFor="repeatType" className="block text-sm font-medium text-slate-700 mb-2">
+              <ArrowPathIcon className="w-4 h-4 inline mr-1" />
+              繰り返し
+            </label>
+            <select
+              id="repeatType"
+              value={repeatType}
+              onChange={(e) => setRepeatType(e.target.value as RepeatType)}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+            >
+              <option value="none">繰り返しなし</option>
+              <option value="daily">毎日</option>
+              <option value="weekly">毎週</option>
+              <option value="monthly">毎月</option>
+              <option value="yearly">毎年</option>
+            </select>
           </div>
 
           <div className="flex gap-3 pt-4">
