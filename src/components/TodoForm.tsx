@@ -39,8 +39,17 @@ export function TodoForm({
   const [reminderTime, setReminderTime] = useState(10); // 10分前がデフォルト
   const [repeatType, setRepeatType] = useState<RepeatType>('none');
 
+  // 現在時刻を取得する関数
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   useEffect(() => {
     if (todo) {
+      // 編集モード：既存のTODOデータを設定
       setTitle(todo.title);
       setDescription(todo.description || '');
       setPriority(todo.priority);
@@ -50,12 +59,14 @@ export function TodoForm({
       setReminderTime(todo.reminderTime || 10);
       setRepeatType(todo.repeatType || 'none');
     } else {
+      // 新規作成モード：デフォルト値を設定
       setTitle(initialTitle || '');
       setDescription('');
       setPriority('medium');
       const baseDate = selectedDate || new Date();
       setDueDate(format(baseDate, "yyyy-MM-dd"));
-      setDueTime('');
+      // 新規作成時は現在時刻をデフォルトに設定
+      setDueTime(getCurrentTime());
       setReminderEnabled(false);
       setReminderTime(10); // 10分前
       setRepeatType('none');
@@ -86,12 +97,14 @@ export function TodoForm({
     );
     
     if (!todo) {
+      // 新規作成後はフォームをリセット
       setTitle('');
       setDescription('');
       setPriority('medium');
       const baseDate = selectedDate || new Date();
       setDueDate(format(baseDate, "yyyy-MM-dd"));
-      setDueTime('');
+      // リセット時も現在時刻を設定
+      setDueTime(getCurrentTime());
       setReminderEnabled(false);
       setReminderTime(10);
       setRepeatType('none');
@@ -201,15 +214,36 @@ export function TodoForm({
           <div>
             <label htmlFor="dueTime" className="block text-sm font-medium text-slate-700 mb-2">
               <ClockIcon className="w-4 h-4 inline mr-1" />
-              時刻（任意）
+              時刻
             </label>
-            <input
-              type="time"
-              id="dueTime"
-              value={dueTime}
-              onChange={(e) => setDueTime(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="time"
+                id="dueTime"
+                value={dueTime}
+                onChange={(e) => setDueTime(e.target.value)}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+              />
+              <button
+                type="button"
+                onClick={() => setDueTime(getCurrentTime())}
+                className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200"
+                title="現在時刻を設定"
+              >
+                現在
+              </button>
+              <button
+                type="button"
+                onClick={() => setDueTime('')}
+                className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200"
+                title="時刻をクリア"
+              >
+                クリア
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              新規作成時は現在時刻が自動設定されます
+            </p>
           </div>
 
           {/* リマインダー設定 */}
