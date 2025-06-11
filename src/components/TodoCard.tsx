@@ -184,7 +184,6 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               <button
                 onClick={handleTestNotification}
                 className="p-0.5 text-blue-400 hover:text-blue-600 rounded"
-                title="テスト通知"
               >
                 <BellIcon className="w-2.5 h-2.5" />
               </button>
@@ -298,7 +297,6 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
             <button
               onClick={handleTestNotification}
               className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-              title="テスト通知"
             >
               <BellIcon className="w-4 h-4" />
             </button>
