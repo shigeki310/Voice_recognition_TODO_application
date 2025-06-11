@@ -36,7 +36,7 @@ export function TodoForm({
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('');
   const [reminderEnabled, setReminderEnabled] = useState(false);
-  const [reminderTime, setReminderTime] = useState(60); // 1時間前がデフォルト
+  const [reminderTime, setReminderTime] = useState(10); // 10分前がデフォルト
   const [repeatType, setRepeatType] = useState<RepeatType>('none');
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function TodoForm({
       setDueDate(format(todo.dueDate, "yyyy-MM-dd"));
       setDueTime(todo.dueTime || '');
       setReminderEnabled(todo.reminderEnabled || false);
-      setReminderTime(todo.reminderTime || 60);
+      setReminderTime(todo.reminderTime || 10);
       setRepeatType(todo.repeatType || 'none');
     } else {
       setTitle(initialTitle || '');
@@ -57,7 +57,7 @@ export function TodoForm({
       setDueDate(format(baseDate, "yyyy-MM-dd"));
       setDueTime('');
       setReminderEnabled(false);
-      setReminderTime(60); // 1時間前
+      setReminderTime(10); // 10分前
       setRepeatType('none');
     }
   }, [todo, initialTitle, selectedDate, isOpen]);
@@ -93,7 +93,7 @@ export function TodoForm({
       setDueDate(format(baseDate, "yyyy-MM-dd"));
       setDueTime('');
       setReminderEnabled(false);
-      setReminderTime(60);
+      setReminderTime(10);
       setRepeatType('none');
     }
     
@@ -243,13 +243,17 @@ export function TodoForm({
               >
                 <div>
                   <label className="block text-sm text-slate-600 mb-1">
-                    通知タイミング（1時間間隔で管理されます）
+                    通知タイミング
                   </label>
                   <select
                     value={reminderTime}
                     onChange={(e) => setReminderTime(Number(e.target.value))}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
                   >
+                    <option value={5}>5分前</option>
+                    <option value={10}>10分前</option>
+                    <option value={15}>15分前</option>
+                    <option value={30}>30分前</option>
                     <option value={60}>1時間前</option>
                     <option value={120}>2時間前</option>
                     <option value={180}>3時間前</option>
@@ -260,7 +264,7 @@ export function TodoForm({
                     <option value={10080}>1週間前</option>
                   </select>
                   <p className="text-xs text-slate-500 mt-1">
-                    ※ 通知は1時間間隔で管理され、重複通知を防ぎます
+                    ※ 通知は設定した時間に表示されます
                   </p>
                 </div>
               </motion.div>

@@ -28,7 +28,7 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       console.log('通知許可を要求します');
       requestPermission().then(granted => {
         if (granted) {
-          console.log('通知許可が取得されました - 1時間間隔でリマインダーを管理します');
+          console.log('通知許可が取得されました - リマインダーを管理します');
         } else {
           console.warn('通知許可が拒否されました');
         }
@@ -65,7 +65,7 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       todosWithReminders: todos.filter(t => t.reminderEnabled).length,
       permission,
       supported,
-      notificationIntervalHours: notificationInterval / (1000 * 60 * 60)
+      notificationIntervalMinutes: notificationInterval / (1000 * 60)
     });
 
     // 通知許可がない場合は何もしない
@@ -77,7 +77,7 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
     // 既存のリマインダーをすべてキャンセル
     cancelAllReminders();
 
-    // 有効なリマインダーをスケジュール（1時間以上先のもののみ）
+    // 有効なリマインダーをスケジュール
     const activeReminders = todos.filter(todo => {
       if (!todo.reminderEnabled || todo.completed || !todo.reminderTime) {
         return false;
@@ -98,16 +98,29 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
 
       const timeUntilReminder = reminderTime.getTime() - now.getTime();
       
-      // 1時間以上先のリマインダーのみを対象とする
-      return timeUntilReminder >= notificationInterval;
+      // 未来のリマインダーのみを対象とする
+      return timeUntilReminder > 0;
     });
 
-    console.log(`アクティブなリマインダー（1時間以上先）: ${activeReminders.length}件`);
+    console.log(`アクティブなリマインダー: ${activeReminders.length}件`);
 
     activeReminders.forEach(todo => {
       const timeoutId = scheduleReminder(todo);
       if (timeoutId) {
-        console.log(`リマインダーをスケジュールしました: ${todo.title}`);
+        const now = new Date();
+        let reminderTime: Date;
+
+        if (todo.dueTime) {
+          const [hours, minutes] = todo.dueTime.split(':').map(Number);
+          const dueDateTime = new Date(todo.dueDate);
+          dueDateTime.setHours(hours, minutes, 0, 0);
+          reminderTime = new Date(dueDateTime.getTime() - (todo.reminderTime! * 60 * 1000));
+        } else {
+          reminderTime = new Date(todo.dueDate.getTime() - (todo.reminderTime! * 60 * 1000));
+        }
+
+        const timeUntilReminder = reminderTime.getTime() - now.getTime();
+        console.log(`リマインダーをスケジュールしました: ${todo.title} (${Math.round(timeUntilReminder / 1000 / 60)}分後)`);
       }
     });
 

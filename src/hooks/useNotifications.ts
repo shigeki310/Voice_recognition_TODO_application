@@ -18,10 +18,10 @@ export function useNotifications() {
   });
 
   const [scheduledReminders, setScheduledReminders] = useState<ScheduledReminder[]>([]);
-  const lastNotificationTime = useRef<number>(0);
+  const lastNotificationTime = useRef<Record<string, number>>({});
 
-  // 通知間隔を1時間（3600000ミリ秒）に設定
-  const NOTIFICATION_INTERVAL = 60 * 60 * 1000; // 1時間
+  // 通知間隔を10分（600000ミリ秒）に設定
+  const NOTIFICATION_INTERVAL = 10 * 60 * 1000; // 10分
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -61,7 +61,7 @@ export function useNotifications() {
     }
   }, [state.supported, state.permission]);
 
-  const showNotification = useCallback((title: string, options?: NotificationOptions) => {
+  const showNotification = useCallback((title: string, options?: NotificationOptions, todoId?: string) => {
     if (!state.supported) {
       console.warn('通知機能がサポートされていません');
       return null;
@@ -72,11 +72,14 @@ export function useNotifications() {
       return null;
     }
 
-    // 通知間隔チェック（1時間以内の重複通知を防ぐ）
+    // 同じTODOの通知間隔チェック（10分以内の重複通知を防ぐ）
     const now = Date.now();
-    if (now - lastNotificationTime.current < NOTIFICATION_INTERVAL) {
-      console.log(`通知間隔が短すぎるため、通知をスキップしました（前回から${Math.round((now - lastNotificationTime.current) / 1000 / 60)}分経過）`);
-      return null;
+    if (todoId && lastNotificationTime.current[todoId]) {
+      const timeSinceLastNotification = now - lastNotificationTime.current[todoId];
+      if (timeSinceLastNotification < NOTIFICATION_INTERVAL) {
+        console.log(`通知間隔が短すぎるため、通知をスキップしました（前回から${Math.round(timeSinceLastNotification / 1000 / 60)}分経過）`);
+        return null;
+      }
     }
 
     try {
@@ -89,7 +92,9 @@ export function useNotifications() {
       });
 
       console.log('通知を表示しました:', title);
-      lastNotificationTime.current = now;
+      if (todoId) {
+        lastNotificationTime.current[todoId] = now;
+      }
 
       // 通知クリック時の処理
       notification.onclick = () => {
@@ -137,12 +142,6 @@ export function useNotifications() {
 
     const timeUntilReminder = reminderTime.getTime() - now.getTime();
     
-    // 1時間未満の場合はスケジュールしない
-    if (timeUntilReminder < NOTIFICATION_INTERVAL) {
-      console.log(`リマインダー時刻まで1時間未満のため、スケジュールしません: ${todo.title} (${Math.round(timeUntilReminder / 1000 / 60)}分後)`);
-      return null;
-    }
-
     console.log(`リマインダーを${Math.round(timeUntilReminder / 1000 / 60)}分後にスケジュールしました:`, todo.title);
 
     const timeoutId = window.setTimeout(() => {
@@ -152,7 +151,7 @@ export function useNotifications() {
         tag: `reminder-${todo.id}`,
         icon: '/vite.svg',
         requireInteraction: true,
-      });
+      }, todo.id);
 
       // スケジュールリストから削除
       setScheduledReminders(prev => 
@@ -167,7 +166,7 @@ export function useNotifications() {
     ]);
 
     return timeoutId;
-  }, [showNotification, NOTIFICATION_INTERVAL]);
+  }, [showNotification]);
 
   const cancelReminder = useCallback((todoId: string) => {
     const reminder = scheduledReminders.find(r => r.todoId === todoId);
