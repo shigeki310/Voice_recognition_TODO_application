@@ -23,7 +23,7 @@ interface TodoCardProps {
   onToggle: (id: string) => void;
   onEdit: (todo: Todo) => void;
   onDelete: (id: string) => void;
-  compact?: boolean; // 週・月表示用のコンパクトモード
+  compact?: boolean;
 }
 
 const priorityConfig = {
@@ -32,39 +32,38 @@ const priorityConfig = {
     color: 'text-red-500',
     bg: 'bg-red-50',
     border: 'border-red-200',
-    label: '高'
+    label: '高',
+    accent: 'bg-red-500'
   },
   medium: {
     icon: InformationCircleIcon,
     color: 'text-amber-500',
     bg: 'bg-amber-50',
     border: 'border-amber-200',
-    label: '中'
+    label: '中',
+    accent: 'bg-amber-500'
   },
   low: {
     icon: CheckIcon,
     color: 'text-green-500',
     bg: 'bg-green-50',
     border: 'border-green-200',
-    label: '低'
+    label: '低',
+    accent: 'bg-green-500'
   }
 };
 
-// タイトルを適切に省略する関数
-const truncateTitle = (title: string, maxLength: number = 10): string => {
+const truncateTitle = (title: string, maxLength: number = 12): string => {
   if (title.length <= maxLength) {
     return title;
   }
   
-  // 10文字で切り取り、適切な区切りを探す
   const truncated = title.substring(0, maxLength);
   
-  // 句読点や区切り文字で終わっている場合はそのまま
   if (/[。、！？\s]$/.test(truncated)) {
     return truncated + '...';
   }
   
-  // 最後の区切り文字を探す
   const lastPunctuation = Math.max(
     truncated.lastIndexOf('。'),
     truncated.lastIndexOf('、'),
@@ -88,40 +87,32 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
   const isOverdue = !todo.completed && todo.dueDate < new Date();
   const isDueToday = format(todo.dueDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
-  // 時刻表示の準備
-  const getTimeDisplay = () => {
-    if (todo.dueTime) {
-      return todo.dueTime;
-    }
-    return null;
+  // 時刻とリマインダーの統合表示
+  const getTimeInfo = () => {
+    const timeDisplay = todo.dueTime || null;
+    const reminderDisplay = todo.reminderEnabled && todo.reminderTime ? (() => {
+      if (todo.reminderTime >= 1440) {
+        const days = Math.floor(todo.reminderTime / 1440);
+        return `${days}日前`;
+      } else if (todo.reminderTime >= 60) {
+        const hours = Math.floor(todo.reminderTime / 60);
+        return `${hours}時間前`;
+      } else {
+        return `${todo.reminderTime}分前`;
+      }
+    })() : null;
+
+    return { timeDisplay, reminderDisplay };
   };
 
-  const timeDisplay = getTimeDisplay();
+  const { timeDisplay, reminderDisplay } = getTimeInfo();
 
-  // テスト通知ボタン（開発モードのみ）
   const handleTestNotification = (e: React.MouseEvent) => {
     e.stopPropagation();
     testNotification(todo);
   };
 
-  // リマインダー表示の準備
-  const getReminderDisplay = () => {
-    if (!todo.reminderEnabled || !todo.reminderTime) return null;
-    
-    if (todo.reminderTime >= 1440) {
-      const days = Math.floor(todo.reminderTime / 1440);
-      return `${days}日前`;
-    } else if (todo.reminderTime >= 60) {
-      const hours = Math.floor(todo.reminderTime / 60);
-      return `${hours}時間前`;
-    } else {
-      return `${todo.reminderTime}分前`;
-    }
-  };
-
-  const reminderDisplay = getReminderDisplay();
-
-  // コンパクトモード（週・月表示）の場合
+  // コンパクトモード（週・月表示）
   if (compact) {
     return (
       <motion.div
@@ -131,16 +122,15 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
         exit={{ opacity: 0, scale: 0.9 }}
         whileHover={{ scale: 1.02 }}
         className={clsx(
-          'p-2 rounded-lg border group cursor-pointer transition-all duration-200',
-          todo.priority === 'high' && 'border-l-2 border-l-red-400 bg-red-50/80',
-          todo.priority === 'medium' && 'border-l-2 border-l-amber-400 bg-amber-50/80',
-          todo.priority === 'low' && 'border-l-2 border-l-green-400 bg-green-50/80',
-          todo.completed && 'opacity-60',
-          'bg-white shadow-sm hover:shadow-md'
+          'relative p-2 rounded-lg border group cursor-pointer transition-all duration-200 bg-white shadow-sm hover:shadow-md',
+          todo.completed && 'opacity-60'
         )}
         onClick={() => onEdit(todo)}
       >
-        <div className="flex items-start gap-1">
+        {/* 優先度アクセント */}
+        <div className={clsx('absolute left-0 top-0 bottom-0 w-1 rounded-l-lg', priority.accent)} />
+        
+        <div className="flex items-start gap-2 ml-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -161,44 +151,45 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
                 'text-xs font-medium leading-tight mb-1',
                 todo.completed ? 'line-through text-slate-500' : 'text-slate-900'
               )}
-              title={todo.title} // ホバー時に完全なタイトルを表示
+              title={todo.title}
             >
-              {truncateTitle(todo.title, 10)}
+              {truncateTitle(todo.title, 12)}
             </h3>
             
-            <div className="flex items-center justify-between">
+            {/* 統合された時間情報 */}
+            <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-1">
                 <CalendarIcon className="w-2 h-2 text-slate-400" />
                 <span className={clsx(
-                  'text-xs',
                   isOverdue && !todo.completed ? 'text-red-500 font-medium' : 'text-slate-500'
                 )}>
                   {format(todo.dueDate, 'M/d', { locale: ja })}
-                  {timeDisplay && (
-                    <span className="ml-1 text-xs">
-                      {timeDisplay}
-                    </span>
-                  )}
                 </span>
+                {timeDisplay && (
+                  <>
+                    <ClockIcon className="w-2 h-2 text-slate-400 ml-1" />
+                    <span className="text-slate-600">{timeDisplay}</span>
+                  </>
+                )}
               </div>
               
-              <div className="flex items-center gap-0.5">
-                {todo.reminderEnabled && (
+              {/* リマインダーと優先度を横並び */}
+              <div className="flex items-center gap-1">
+                {reminderDisplay && (
                   <div className="flex items-center gap-0.5 px-1 py-0.5 rounded text-xs bg-blue-50">
                     <BellIcon className="w-2 h-2 text-blue-500" />
                     <span className="text-blue-600 text-xs">{reminderDisplay}</span>
                   </div>
                 )}
                 <div className={clsx(
-                  'flex items-center gap-0.5 px-1 py-0.5 rounded text-xs',
-                  priority.bg
-                )}>
-                  <PriorityIcon className={clsx('w-2 h-2', priority.color)} />
-                </div>
+                  'w-2 h-2 rounded-full',
+                  priority.accent
+                )} title={`優先度: ${priority.label}`} />
               </div>
             </div>
           </div>
 
+          {/* ホバー時のアクションボタン */}
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
             {process.env.NODE_ENV === 'development' && todo.reminderEnabled && (
               <button
@@ -233,7 +224,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
     );
   }
 
-  // 通常モード（日表示）の場合
+  // 通常モード（日表示）
   return (
     <motion.div
       layout
@@ -242,14 +233,14 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
       exit={{ opacity: 0, y: -20 }}
       whileHover={{ y: -2 }}
       className={clsx(
-        'task-card p-4 group',
-        todo.priority === 'high' && 'priority-high',
-        todo.priority === 'medium' && 'priority-medium',
-        todo.priority === 'low' && 'priority-low',
+        'relative bg-white rounded-xl shadow-sm border border-slate-200/60 hover:shadow-md transition-all duration-200 p-4 group',
         todo.completed && 'opacity-60'
       )}
     >
-      <div className="flex items-start gap-3">
+      {/* 優先度アクセント */}
+      <div className={clsx('absolute left-0 top-0 bottom-0 w-1 rounded-l-xl', priority.accent)} />
+      
+      <div className="flex items-start gap-3 ml-1">
         <button
           onClick={() => onToggle(todo.id)}
           className="flex-shrink-0 mt-0.5 transition-colors duration-200"
@@ -263,56 +254,65 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
 
         <div className="flex-1 min-w-0">
           <h3 className={clsx(
-            'font-medium text-slate-900 mb-1',
+            'font-medium text-slate-900 mb-2',
             todo.completed && 'line-through text-slate-500'
           )}>
             {todo.title}
           </h3>
           
           {todo.description && (
-            <p className="text-sm text-slate-600 mb-2 line-clamp-2">
+            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
               {todo.description}
             </p>
           )}
 
-          <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
-            <div className="flex items-center gap-1">
-              <CalendarIcon className="w-3 h-3" />
-              <span className={clsx(
-                isOverdue && !todo.completed && 'text-red-500 font-medium',
-                isDueToday && !todo.completed && 'text-amber-600 font-medium'
-              )}>
-                {format(todo.dueDate, 'M月d日', { locale: ja })}
-                {timeDisplay && (
-                  <span className="ml-2 flex items-center gap-1">
-                    <ClockIcon className="w-3 h-3" />
-                    {timeDisplay}
-                  </span>
-                )}
-              </span>
-            </div>
-            
-            <div className={clsx(
-              'flex items-center gap-1 px-2 py-0.5 rounded-full',
-              priority.bg,
-              priority.border,
-              'border'
-            )}>
-              <PriorityIcon className={clsx('w-3 h-3', priority.color)} />
-              <span className={priority.color}>{priority.label}</span>
-            </div>
-
-            {todo.reminderEnabled && reminderDisplay && (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200">
-                <BellIcon className="w-3 h-3 text-blue-500" />
-                <span className="text-blue-600">
-                  {reminderDisplay}
+          {/* 統合された情報バー */}
+          <div className="flex items-center justify-between">
+            {/* 左側：日付と時刻 */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <CalendarIcon className="w-3 h-3 text-slate-400" />
+                <span className={clsx(
+                  'text-sm',
+                  isOverdue && !todo.completed && 'text-red-500 font-medium',
+                  isDueToday && !todo.completed && 'text-amber-600 font-medium'
+                )}>
+                  {format(todo.dueDate, 'M月d日', { locale: ja })}
                 </span>
               </div>
-            )}
+              
+              {timeDisplay && (
+                <div className="flex items-center gap-1">
+                  <ClockIcon className="w-3 h-3 text-slate-400" />
+                  <span className="text-sm text-slate-600">{timeDisplay}</span>
+                </div>
+              )}
+            </div>
+
+            {/* 右側：リマインダーと優先度 */}
+            <div className="flex items-center gap-2">
+              {reminderDisplay && (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-blue-50 border border-blue-200">
+                  <BellIcon className="w-3 h-3 text-blue-500" />
+                  <span className="text-xs text-blue-600 font-medium">
+                    {reminderDisplay}
+                  </span>
+                </div>
+              )}
+              
+              <div className={clsx(
+                'flex items-center gap-1 px-2 py-1 rounded-full border',
+                priority.bg,
+                priority.border
+              )}>
+                <PriorityIcon className={clsx('w-3 h-3', priority.color)} />
+                <span className={clsx('text-xs font-medium', priority.color)}>{priority.label}</span>
+              </div>
+            </div>
           </div>
         </div>
 
+        {/* アクションボタン */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           {process.env.NODE_ENV === 'development' && todo.reminderEnabled && (
             <button
