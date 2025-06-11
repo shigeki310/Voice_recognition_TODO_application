@@ -7,35 +7,81 @@ interface ReminderManagerProps {
 }
 
 export function ReminderManager({ todos }: ReminderManagerProps) {
-  const { scheduleReminder, cancelReminder, requestPermission, permission } = useNotifications();
+  const { 
+    scheduleReminder, 
+    cancelReminder, 
+    cancelAllReminders,
+    requestPermission, 
+    permission,
+    supported,
+    scheduledCount
+  } = useNotifications();
 
   useEffect(() => {
     // 通知許可を要求
-    if (permission === 'default') {
-      requestPermission();
+    if (permission === 'default' && supported) {
+      console.log('通知許可を要求します');
+      requestPermission().then(granted => {
+        if (granted) {
+          console.log('通知許可が取得されました');
+        } else {
+          console.warn('通知許可が拒否されました');
+        }
+      });
     }
-  }, [permission, requestPermission]);
+  }, [permission, requestPermission, supported]);
 
   useEffect(() => {
-    const reminderTimeouts: number[] = [];
+    console.log('ReminderManager: TODOリストが更新されました', {
+      totalTodos: todos.length,
+      todosWithReminders: todos.filter(t => t.reminderEnabled).length,
+      permission,
+      supported
+    });
+
+    // 既存のリマインダーをすべてキャンセル
+    cancelAllReminders();
+
+    // 通知許可がない場合は何もしない
+    if (permission !== 'granted') {
+      console.log('通知許可がないため、リマインダーをスケジュールしません');
+      return;
+    }
 
     // 有効なリマインダーをスケジュール
-    todos.forEach(todo => {
-      if (todo.reminderEnabled && !todo.completed) {
-        const timeoutId = scheduleReminder(todo);
-        if (timeoutId) {
-          reminderTimeouts.push(timeoutId);
-        }
+    const activeReminders = todos.filter(todo => 
+      todo.reminderEnabled && 
+      !todo.completed && 
+      todo.reminderTime
+    );
+
+    console.log('アクティブなリマインダー:', activeReminders.length);
+
+    activeReminders.forEach(todo => {
+      const timeoutId = scheduleReminder(todo);
+      if (timeoutId) {
+        console.log(`リマインダーをスケジュールしました: ${todo.title}`);
       }
     });
 
     // クリーンアップ
     return () => {
-      reminderTimeouts.forEach(timeoutId => {
-        cancelReminder(timeoutId);
-      });
+      console.log('ReminderManager: クリーンアップを実行');
+      cancelAllReminders();
     };
-  }, [todos, scheduleReminder, cancelReminder]);
+  }, [todos, scheduleReminder, cancelAllReminders, permission]);
 
-  return null; // このコンポーネントはUIを持たない
+  // 開発モードでのデバッグ情報表示
+  if (process.env.NODE_ENV === 'development') {
+    return (
+      <div className="fixed bottom-20 left-4 bg-black/80 text-white p-2 rounded text-xs z-50">
+        <div>通知: {supported ? '対応' : '非対応'}</div>
+        <div>許可: {permission}</div>
+        <div>スケジュール済み: {scheduledCount}</div>
+        <div>リマインダー有効: {todos.filter(t => t.reminderEnabled).length}</div>
+      </div>
+    );
+  }
+
+  return null;
 }

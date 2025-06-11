@@ -15,6 +15,7 @@ import {
   BellIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
+import { useNotifications } from '../hooks/useNotifications';
 import clsx from 'clsx';
 
 interface TodoCardProps {
@@ -80,6 +81,7 @@ const truncateTitle = (title: string, maxLength: number = 10): string => {
 };
 
 export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: TodoCardProps) {
+  const { testNotification } = useNotifications();
   const priority = priorityConfig[todo.priority];
   const PriorityIcon = priority.icon;
   
@@ -95,6 +97,12 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
   };
 
   const timeDisplay = getTimeDisplay();
+
+  // テスト通知ボタン（開発モードのみ）
+  const handleTestNotification = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    testNotification(todo);
+  };
 
   // コンパクトモード（週・月表示）の場合
   if (compact) {
@@ -172,6 +180,15 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
           </div>
 
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            {process.env.NODE_ENV === 'development' && todo.reminderEnabled && (
+              <button
+                onClick={handleTestNotification}
+                className="p-0.5 text-blue-400 hover:text-blue-600 rounded"
+                title="テスト通知"
+              >
+                <BellIcon className="w-2.5 h-2.5" />
+              </button>
+            )}
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -277,6 +294,15 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
         </div>
 
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {process.env.NODE_ENV === 'development' && todo.reminderEnabled && (
+            <button
+              onClick={handleTestNotification}
+              className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+              title="テスト通知"
+            >
+              <BellIcon className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={() => onEdit(todo)}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors duration-200"

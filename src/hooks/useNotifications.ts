@@ -6,11 +6,18 @@ interface NotificationState {
   supported: boolean;
 }
 
+interface ScheduledReminder {
+  todoId: string;
+  timeoutId: number;
+}
+
 export function useNotifications() {
   const [state, setState] = useState<NotificationState>({
     permission: 'default',
     supported: false
   });
+
+  const [scheduledReminders, setScheduledReminders] = useState<ScheduledReminder[]>([]);
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -18,80 +25,188 @@ export function useNotifications() {
         permission: Notification.permission,
         supported: true
       });
+    } else {
+      console.warn('このブラウザは通知機能をサポートしていません');
     }
   }, []);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
-    if (!state.supported) return false;
+    if (!state.supported) {
+      console.warn('通知機能がサポートされていません');
+      return false;
+    }
+
+    if (state.permission === 'granted') {
+      return true;
+    }
 
     try {
       const permission = await Notification.requestPermission();
       setState(prev => ({ ...prev, permission }));
-      return permission === 'granted';
+      
+      if (permission === 'granted') {
+        console.log('通知許可が取得されました');
+        return true;
+      } else {
+        console.warn('通知許可が拒否されました');
+        return false;
+      }
     } catch (error) {
       console.error('通知許可の取得に失敗しました:', error);
       return false;
     }
-  }, [state.supported]);
+  }, [state.supported, state.permission]);
 
   const showNotification = useCallback((title: string, options?: NotificationOptions) => {
-    if (state.permission !== 'granted') return null;
+    if (!state.supported) {
+      console.warn('通知機能がサポートされていません');
+      return null;
+    }
+
+    if (state.permission !== 'granted') {
+      console.warn('通知許可が取得されていません');
+      return null;
+    }
 
     try {
       const notification = new Notification(title, {
         icon: '/vite.svg',
         badge: '/vite.svg',
+        requireInteraction: false,
+        silent: false,
         ...options
       });
 
+      console.log('通知を表示しました:', title);
+
       // 通知クリック時の処理
       notification.onclick = () => {
+        console.log('通知がクリックされました');
         window.focus();
         notification.close();
       };
 
-      // 自動で閉じる（5秒後）
+      // 自動で閉じる（8秒後）
       setTimeout(() => {
         notification.close();
-      }, 5000);
+      }, 8000);
 
       return notification;
     } catch (error) {
       console.error('通知の表示に失敗しました:', error);
       return null;
     }
-  }, [state.permission]);
+  }, [state.permission, state.supported]);
 
   const scheduleReminder = useCallback((todo: Todo) => {
-    if (!todo.reminderEnabled || !todo.reminderTime) return;
+    if (!todo.reminderEnabled || !todo.reminderTime) {
+      console.log('リマインダーが無効または時間が設定されていません:', todo.title);
+      return null;
+    }
 
     const now = new Date();
-    const reminderTime = new Date(todo.dueDate.getTime() - (todo.reminderTime * 60 * 1000));
+    let reminderTime: Date;
 
-    if (reminderTime <= now) return; // 既に過ぎている場合はスケジュールしない
+    // 時刻が設定されている場合は、その時刻から計算
+    if (todo.dueTime) {
+      const [hours, minutes] = todo.dueTime.split(':').map(Number);
+      const dueDateTime = new Date(todo.dueDate);
+      dueDateTime.setHours(hours, minutes, 0, 0);
+      reminderTime = new Date(dueDateTime.getTime() - (todo.reminderTime * 60 * 1000));
+    } else {
+      // 時刻が設定されていない場合は、日付の開始時刻から計算
+      reminderTime = new Date(todo.dueDate.getTime() - (todo.reminderTime * 60 * 1000));
+    }
+
+    console.log('リマインダー計算:', {
+      todoTitle: todo.title,
+      dueDate: todo.dueDate,
+      dueTime: todo.dueTime,
+      reminderMinutes: todo.reminderTime,
+      reminderTime: reminderTime,
+      now: now
+    });
+
+    if (reminderTime <= now) {
+      console.log('リマインダー時刻が既に過ぎています:', todo.title);
+      
+      // テスト用：即座に通知を表示
+      if (process.env.NODE_ENV === 'development') {
+        console.log('開発モード：即座に通知を表示します');
+        setTimeout(() => {
+          showNotification(`リマインダー: ${todo.title}`, {
+            body: todo.description || '期限が近づいています',
+            tag: `reminder-${todo.id}`,
+          });
+        }, 1000);
+      }
+      
+      return null;
+    }
 
     const timeUntilReminder = reminderTime.getTime() - now.getTime();
+    console.log(`リマインダーを${Math.round(timeUntilReminder / 1000)}秒後にスケジュールしました:`, todo.title);
 
-    const timeoutId = setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
+      console.log('リマインダー通知を表示:', todo.title);
       showNotification(`リマインダー: ${todo.title}`, {
         body: todo.description || '期限が近づいています',
         tag: `reminder-${todo.id}`,
-        requireInteraction: true
+        icon: '/vite.svg',
+        requireInteraction: true,
       });
+
+      // スケジュールリストから削除
+      setScheduledReminders(prev => 
+        prev.filter(reminder => reminder.timeoutId !== timeoutId)
+      );
     }, timeUntilReminder);
+
+    // スケジュールリストに追加
+    setScheduledReminders(prev => [
+      ...prev.filter(reminder => reminder.todoId !== todo.id),
+      { todoId: todo.id, timeoutId }
+    ]);
 
     return timeoutId;
   }, [showNotification]);
 
-  const cancelReminder = useCallback((timeoutId: number) => {
-    clearTimeout(timeoutId);
-  }, []);
+  const cancelReminder = useCallback((todoId: string) => {
+    const reminder = scheduledReminders.find(r => r.todoId === todoId);
+    if (reminder) {
+      clearTimeout(reminder.timeoutId);
+      setScheduledReminders(prev => 
+        prev.filter(r => r.todoId !== todoId)
+      );
+      console.log('リマインダーをキャンセルしました:', todoId);
+    }
+  }, [scheduledReminders]);
+
+  const cancelAllReminders = useCallback(() => {
+    scheduledReminders.forEach(reminder => {
+      clearTimeout(reminder.timeoutId);
+    });
+    setScheduledReminders([]);
+    console.log('すべてのリマインダーをキャンセルしました');
+  }, [scheduledReminders]);
+
+  // テスト用の即座通知機能
+  const testNotification = useCallback((todo: Todo) => {
+    console.log('テスト通知を表示:', todo.title);
+    showNotification(`テスト通知: ${todo.title}`, {
+      body: todo.description || 'これはテスト通知です',
+      tag: `test-${todo.id}`,
+    });
+  }, [showNotification]);
 
   return {
     ...state,
     requestPermission,
     showNotification,
     scheduleReminder,
-    cancelReminder
+    cancelReminder,
+    cancelAllReminders,
+    testNotification,
+    scheduledCount: scheduledReminders.length
   };
 }
