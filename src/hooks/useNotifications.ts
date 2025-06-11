@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Todo } from '../types/todo';
 
 interface NotificationState {
@@ -18,7 +18,7 @@ export function useNotifications() {
   });
 
   const [scheduledReminders, setScheduledReminders] = useState<ScheduledReminder[]>([]);
-  const [lastNotificationTime, setLastNotificationTime] = useState<number>(0);
+  const lastNotificationTime = useRef<number>(0);
 
   // 通知間隔を1時間（3600000ミリ秒）に設定
   const NOTIFICATION_INTERVAL = 60 * 60 * 1000; // 1時間
@@ -74,8 +74,8 @@ export function useNotifications() {
 
     // 通知間隔チェック（1時間以内の重複通知を防ぐ）
     const now = Date.now();
-    if (now - lastNotificationTime < NOTIFICATION_INTERVAL) {
-      console.log('通知間隔が短すぎるため、通知をスキップしました');
+    if (now - lastNotificationTime.current < NOTIFICATION_INTERVAL) {
+      console.log(`通知間隔が短すぎるため、通知をスキップしました（前回から${Math.round((now - lastNotificationTime.current) / 1000 / 60)}分経過）`);
       return null;
     }
 
@@ -89,7 +89,7 @@ export function useNotifications() {
       });
 
       console.log('通知を表示しました:', title);
-      setLastNotificationTime(now);
+      lastNotificationTime.current = now;
 
       // 通知クリック時の処理
       notification.onclick = () => {
@@ -108,7 +108,7 @@ export function useNotifications() {
       console.error('通知の表示に失敗しました:', error);
       return null;
     }
-  }, [state.permission, state.supported, lastNotificationTime, NOTIFICATION_INTERVAL]);
+  }, [state.permission, state.supported, NOTIFICATION_INTERVAL]);
 
   const scheduleReminder = useCallback((todo: Todo) => {
     if (!todo.reminderEnabled || !todo.reminderTime) {
@@ -130,15 +130,6 @@ export function useNotifications() {
       reminderTime = new Date(todo.dueDate.getTime() - (todo.reminderTime * 60 * 1000));
     }
 
-    console.log('リマインダー計算:', {
-      todoTitle: todo.title,
-      dueDate: todo.dueDate,
-      dueTime: todo.dueTime,
-      reminderMinutes: todo.reminderTime,
-      reminderTime: reminderTime,
-      now: now
-    });
-
     if (reminderTime <= now) {
       console.log('リマインダー時刻が既に過ぎています:', todo.title);
       return null;
@@ -148,7 +139,7 @@ export function useNotifications() {
     
     // 1時間未満の場合はスケジュールしない
     if (timeUntilReminder < NOTIFICATION_INTERVAL) {
-      console.log(`リマインダー時刻まで1時間未満のため、スケジュールしません: ${todo.title}`);
+      console.log(`リマインダー時刻まで1時間未満のため、スケジュールしません: ${todo.title} (${Math.round(timeUntilReminder / 1000 / 60)}分後)`);
       return null;
     }
 
@@ -190,11 +181,13 @@ export function useNotifications() {
   }, [scheduledReminders]);
 
   const cancelAllReminders = useCallback(() => {
-    scheduledReminders.forEach(reminder => {
-      clearTimeout(reminder.timeoutId);
-    });
-    setScheduledReminders([]);
-    console.log('すべてのリマインダーをキャンセルしました');
+    if (scheduledReminders.length > 0) {
+      scheduledReminders.forEach(reminder => {
+        clearTimeout(reminder.timeoutId);
+      });
+      setScheduledReminders([]);
+      console.log(`${scheduledReminders.length}件のリマインダーをキャンセルしました`);
+    }
   }, [scheduledReminders]);
 
   // テスト用の即座通知機能（開発モードでのみ有効）
@@ -204,23 +197,32 @@ export function useNotifications() {
       return;
     }
     
+    if (state.permission !== 'granted') {
+      console.warn('通知許可が取得されていないため、テスト通知を表示できません');
+      return;
+    }
+    
     console.log('テスト通知を表示:', todo.title);
     // テスト通知は間隔制限を無視
-    const notification = new Notification(`テスト通知: ${todo.title}`, {
-      body: todo.description || 'これはテスト通知です',
-      tag: `test-${todo.id}`,
-      icon: '/vite.svg',
-    });
+    try {
+      const notification = new Notification(`テスト通知: ${todo.title}`, {
+        body: todo.description || 'これはテスト通知です',
+        tag: `test-${todo.id}`,
+        icon: '/vite.svg',
+      });
 
-    notification.onclick = () => {
-      window.focus();
-      notification.close();
-    };
+      notification.onclick = () => {
+        window.focus();
+        notification.close();
+      };
 
-    setTimeout(() => {
-      notification.close();
-    }, 5000);
-  }, []);
+      setTimeout(() => {
+        notification.close();
+      }, 5000);
+    } catch (error) {
+      console.error('テスト通知の表示に失敗しました:', error);
+    }
+  }, [state.permission]);
 
   return {
     ...state,

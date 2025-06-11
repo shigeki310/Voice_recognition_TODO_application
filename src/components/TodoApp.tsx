@@ -19,7 +19,8 @@ export function TodoApp() {
 
   const { todos, loading, addTodo, updateTodo, deleteTodo, toggleTodo } = useTodos();
 
-  if (loading) {
+  // 初回ローディングのみ表示
+  if (loading && todos.length === 0) {
     return <LoadingSpinner />;
   }
 

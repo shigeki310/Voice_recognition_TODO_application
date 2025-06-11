@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Todo, Priority, RepeatType } from '../types/todo';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
@@ -7,8 +7,10 @@ export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [loading, setLoading] = useState(true);
   const { authState } = useAuth();
-
-  // TODOの読み込み
+  const loadingRef = useRef(false);
+  const initialLoadDone = useRef(false);
+  
+  // TODOの読み込み（初回のみ実行）
   const loadTodos = useCallback(async () => {
     if (!authState.user) {
       setTodos([]);
@@ -16,10 +18,19 @@ export function useTodos() {
       return;
     }
 
+    // 既にローディング中または初回読み込み完了済みの場合はスキップ
+    if (loadingRef.current || initialLoadDone.current) {
+      console.log('ローディングをスキップしました（既に実行済み）');
+      return;
+    }
+
     try {
+      loadingRef.current = true;
       setLoading(true);
       
-      // Test Supabase connection first
+      console.log('初回TODOデータを読み込み中...');
+
+      // Supabase接続テスト
       const { data: connectionTest, error: connectionError } = await supabase
         .from('todos')
         .select('count', { count: 'exact', head: true });
@@ -56,18 +67,28 @@ export function useTodos() {
       }));
 
       setTodos(formattedTodos);
+      initialLoadDone.current = true;
+      console.log(`初回TODOデータ読み込み完了: ${formattedTodos.length}件`);
     } catch (error) {
       console.error('Error loading todos:', error);
-      // Set empty array on error to prevent UI issues
       setTodos([]);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   }, [authState.user]);
 
+  // 初回読み込みのみ実行
   useEffect(() => {
-    loadTodos();
-  }, [loadTodos]);
+    if (authState.user && !initialLoadDone.current) {
+      console.log('初回TODOデータ読み込みを開始');
+      loadTodos();
+    } else if (!authState.user) {
+      setTodos([]);
+      setLoading(false);
+      initialLoadDone.current = false;
+    }
+  }, [authState.user, loadTodos]);
 
   const addTodo = useCallback(async (
     title: string, 
@@ -121,7 +142,9 @@ export function useTodos() {
         updatedAt: new Date(data.updated_at)
       };
 
+      // ローカル状態を即座に更新（再読み込みを避ける）
       setTodos(prev => [formattedTodo, ...prev]);
+      console.log('新しいTODOを追加しました:', formattedTodo.title);
       return formattedTodo;
     } catch (error) {
       console.error('Error adding todo:', error);
@@ -158,11 +181,13 @@ export function useTodos() {
         throw error;
       }
 
+      // ローカル状態を即座に更新（再読み込みを避ける）
       setTodos(prev => prev.map(todo => 
         todo.id === id 
           ? { ...todo, ...updates, updatedAt: new Date() }
           : todo
       ));
+      console.log('TODOを更新しました:', id);
     } catch (error) {
       console.error('Error updating todo:', error);
     }
@@ -183,7 +208,9 @@ export function useTodos() {
         throw error;
       }
 
+      // ローカル状態を即座に更新（再読み込みを避ける）
       setTodos(prev => prev.filter(todo => todo.id !== id));
+      console.log('TODOを削除しました:', id);
     } catch (error) {
       console.error('Error deleting todo:', error);
     }
@@ -211,6 +238,14 @@ export function useTodos() {
     });
   }, []);
 
+  // 手動リロード機能（緊急時のみ使用）
+  const forceReload = useCallback(async () => {
+    console.log('強制リロードを実行します');
+    initialLoadDone.current = false;
+    loadingRef.current = false;
+    await loadTodos();
+  }, [loadTodos]);
+
   return {
     todos,
     loading,
@@ -219,5 +254,6 @@ export function useTodos() {
     deleteTodo,
     toggleTodo,
     reorderTodos,
+    forceReload, // 緊急時用
   };
 }

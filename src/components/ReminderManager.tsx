@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Todo } from '../types/todo';
 import { useNotifications } from '../hooks/useNotifications';
 
@@ -18,9 +18,13 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
     notificationInterval
   } = useNotifications();
 
+  const lastProcessedTodos = useRef<string>('');
+  const permissionRequested = useRef(false);
+
+  // 通知許可を要求（初回のみ）
   useEffect(() => {
-    // 通知許可を要求（初回のみ）
-    if (permission === 'default' && supported) {
+    if (permission === 'default' && supported && !permissionRequested.current) {
+      permissionRequested.current = true;
       console.log('通知許可を要求します');
       requestPermission().then(granted => {
         if (granted) {
@@ -32,8 +36,31 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
     }
   }, [permission, requestPermission, supported]);
 
+  // TODOリストの変更を監視（不要な再処理を防ぐ）
   useEffect(() => {
-    console.log('ReminderManager: TODOリストが更新されました', {
+    // TODOリストのハッシュを作成して変更を検出
+    const todosHash = JSON.stringify(
+      todos
+        .filter(t => t.reminderEnabled)
+        .map(t => ({
+          id: t.id,
+          title: t.title,
+          dueDate: t.dueDate.getTime(),
+          dueTime: t.dueTime,
+          reminderTime: t.reminderTime,
+          completed: t.completed
+        }))
+        .sort((a, b) => a.id.localeCompare(b.id))
+    );
+
+    // 前回と同じ内容の場合は処理をスキップ
+    if (todosHash === lastProcessedTodos.current) {
+      return;
+    }
+
+    lastProcessedTodos.current = todosHash;
+
+    console.log('ReminderManager: リマインダー設定を更新します', {
       totalTodos: todos.length,
       todosWithReminders: todos.filter(t => t.reminderEnabled).length,
       permission,
@@ -41,14 +68,14 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       notificationIntervalHours: notificationInterval / (1000 * 60 * 60)
     });
 
-    // 既存のリマインダーをすべてキャンセル
-    cancelAllReminders();
-
     // 通知許可がない場合は何もしない
     if (permission !== 'granted') {
       console.log('通知許可がないため、リマインダーをスケジュールしません');
       return;
     }
+
+    // 既存のリマインダーをすべてキャンセル
+    cancelAllReminders();
 
     // 有効なリマインダーをスケジュール（1時間以上先のもののみ）
     const activeReminders = todos.filter(todo => {
