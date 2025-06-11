@@ -28,44 +28,56 @@ export const useAuthProvider = () => {
     error: null
   });
 
+  // 認証状態の初期化（一度だけ実行）
   useEffect(() => {
-    // ローカルストレージから認証状態を復元
-    const loadAuthState = () => {
-      const storedUser = localStorage.getItem('voice_todo_user');
-      if (storedUser) {
-        try {
+    let isMounted = true;
+    
+    const initializeAuth = () => {
+      console.log('認証状態を初期化中...');
+      
+      try {
+        const storedUser = localStorage.getItem('voice_todo_user');
+        if (storedUser && isMounted) {
           const user = JSON.parse(storedUser);
+          console.log('ローカルストレージからユーザー情報を復元:', user.username);
           setAuthState({ user, loading: false, error: null });
-        } catch (error) {
-          localStorage.removeItem('voice_todo_user');
+        } else if (isMounted) {
+          console.log('ローカルストレージにユーザー情報がありません');
           setAuthState({ user: null, loading: false, error: null });
         }
-      } else {
-        setAuthState({ user: null, loading: false, error: null });
+      } catch (error) {
+        console.error('ユーザー情報の復元に失敗:', error);
+        localStorage.removeItem('voice_todo_user');
+        if (isMounted) {
+          setAuthState({ user: null, loading: false, error: null });
+        }
       }
     };
 
-    loadAuthState();
-  }, []);
+    // 初期化を即座に実行
+    initializeAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // 空の依存配列で一度だけ実行
 
   const register = async (data: RegisterFormData): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('ユーザー登録を開始:', data.username);
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
-      // 入力値のサニタイズ
       const sanitizedUsername = sanitizeInput(data.username);
 
-      // ユーザー名の重複チェック
       const isUsernameAvailable = await checkUsernameAvailability(sanitizedUsername);
       if (!isUsernameAvailable) {
-        setAuthState(prev => ({ ...prev, loading: false, error: 'このユーザー名は既に使用されています' }));
-        return { success: false, error: 'このユーザー名は既に使用されています' };
+        const error = 'このユーザー名は既に使用されています';
+        setAuthState(prev => ({ ...prev, loading: false, error }));
+        return { success: false, error };
       }
 
-      // パスワードのハッシュ化
       const passwordHash = await hashPassword(data.password);
 
-      // ユーザー登録
       const { data: userData, error } = await supabase
         .from('users')
         .insert({
@@ -84,12 +96,14 @@ export const useAuthProvider = () => {
         updated_at: userData.updated_at
       };
 
+      console.log('ユーザー登録完了:', user.username);
       setAuthState({ user, loading: false, error: null });
       localStorage.setItem('voice_todo_user', JSON.stringify(user));
 
       return { success: true };
     } catch (error: any) {
       const errorMessage = error.message || 'ユーザー登録に失敗しました';
+      console.error('ユーザー登録エラー:', errorMessage);
       setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { success: false, error: errorMessage };
     }
@@ -97,11 +111,11 @@ export const useAuthProvider = () => {
 
   const login = async (data: LoginFormData): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('ログインを開始:', data.username);
       setAuthState(prev => ({ ...prev, loading: true, error: null }));
 
       const sanitizedUsername = sanitizeInput(data.username);
 
-      // ユーザー情報を取得
       const { data: userData, error } = await supabase
         .from('users')
         .select('*')
@@ -109,15 +123,16 @@ export const useAuthProvider = () => {
         .single();
 
       if (error || !userData) {
-        setAuthState(prev => ({ ...prev, loading: false, error: 'ユーザー名またはパスワードが正しくありません' }));
-        return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+        const errorMessage = 'ユーザー名またはパスワードが正しくありません';
+        setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+        return { success: false, error: errorMessage };
       }
 
-      // パスワード検証
       const isPasswordValid = await verifyPassword(data.password, userData.password_hash);
       if (!isPasswordValid) {
-        setAuthState(prev => ({ ...prev, loading: false, error: 'ユーザー名またはパスワードが正しくありません' }));
-        return { success: false, error: 'ユーザー名またはパスワードが正しくありません' };
+        const errorMessage = 'ユーザー名またはパスワードが正しくありません';
+        setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
+        return { success: false, error: errorMessage };
       }
 
       const user: User = {
@@ -127,12 +142,14 @@ export const useAuthProvider = () => {
         updated_at: userData.updated_at
       };
 
+      console.log('ログイン完了:', user.username);
       setAuthState({ user, loading: false, error: null });
       localStorage.setItem('voice_todo_user', JSON.stringify(user));
 
       return { success: true };
     } catch (error: any) {
       const errorMessage = error.message || 'ログインに失敗しました';
+      console.error('ログインエラー:', errorMessage);
       setAuthState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { success: false, error: errorMessage };
     }
@@ -140,10 +157,11 @@ export const useAuthProvider = () => {
 
   const logout = async (): Promise<void> => {
     try {
+      console.log('ログアウトを実行');
       setAuthState({ user: null, loading: false, error: null });
       localStorage.removeItem('voice_todo_user');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('ログアウトエラー:', error);
     }
   };
 
@@ -157,7 +175,6 @@ export const useAuthProvider = () => {
         return { success: false, error: 'ユーザーがログインしていません' };
       }
 
-      // 現在のパスワードを検証
       const { data: userData, error: fetchError } = await supabase
         .from('users')
         .select('password_hash')
@@ -173,10 +190,8 @@ export const useAuthProvider = () => {
         return { success: false, error: '現在のパスワードが正しくありません' };
       }
 
-      // 新しいパスワードをハッシュ化
       const newPasswordHash = await hashPassword(newPassword);
 
-      // パスワードを更新
       const { error: updateError } = await supabase
         .from('users')
         .update({ 
@@ -190,7 +205,6 @@ export const useAuthProvider = () => {
         return { success: false, error: 'パスワードの更新に失敗しました' };
       }
 
-      // ローカルストレージのユーザー情報を更新
       const updatedUser = {
         ...authState.user,
         updated_at: new Date().toISOString()
@@ -211,7 +225,6 @@ export const useAuthProvider = () => {
         return { success: false, error: 'ユーザーがログインしていません' };
       }
 
-      // ユーザーに関連するTODOを削除（CASCADE設定により自動削除されるが、明示的に実行）
       const { error: todosDeleteError } = await supabase
         .from('todos')
         .delete()
@@ -222,7 +235,6 @@ export const useAuthProvider = () => {
         return { success: false, error: 'データの削除に失敗しました' };
       }
 
-      // ユーザーアカウントを削除
       const { error: userDeleteError } = await supabase
         .from('users')
         .delete()
@@ -233,7 +245,6 @@ export const useAuthProvider = () => {
         return { success: false, error: 'アカウントの削除に失敗しました' };
       }
 
-      // ローカル状態をクリア
       setAuthState({ user: null, loading: false, error: null });
       localStorage.removeItem('voice_todo_user');
 

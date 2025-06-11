@@ -5,32 +5,24 @@ import { useAuth } from './useAuth';
 
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // 初期値をfalseに変更
   const { authState } = useAuth();
-  const loadingRef = useRef(false);
-  const initialLoadDone = useRef(false);
   
-  // TODOの読み込み（初回のみ実行）
-  const loadTodos = useCallback(async () => {
-    if (!authState.user) {
-      setTodos([]);
-      setLoading(false);
-      return;
-    }
+  // 初期化状態を管理
+  const isInitialized = useRef(false);
+  const currentUserId = useRef<string | null>(null);
 
-    // 既にローディング中または初回読み込み完了済みの場合はスキップ
-    if (loadingRef.current || initialLoadDone.current) {
-      console.log('ローディングをスキップしました（既に実行済み）');
+  // TODOの読み込み（ユーザーが変わった時のみ実行）
+  const loadTodos = useCallback(async (userId: string) => {
+    if (!userId) {
+      console.log('ユーザーIDがないため、TODOの読み込みをスキップ');
       return;
     }
 
     try {
-      loadingRef.current = true;
       setLoading(true);
-      
-      console.log('初回TODOデータを読み込み中...');
+      console.log('TODOデータを読み込み中...', userId);
 
-      // Supabase接続テスト
       const { data: connectionTest, error: connectionError } = await supabase
         .from('todos')
         .select('count', { count: 'exact', head: true });
@@ -43,7 +35,7 @@ export function useTodos() {
       const { data, error } = await supabase
         .from('todos')
         .select('*')
-        .eq('user_id', authState.user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -67,28 +59,60 @@ export function useTodos() {
       }));
 
       setTodos(formattedTodos);
-      initialLoadDone.current = true;
-      console.log(`初回TODOデータ読み込み完了: ${formattedTodos.length}件`);
+      console.log(`TODOデータ読み込み完了: ${formattedTodos.length}件`);
     } catch (error) {
       console.error('Error loading todos:', error);
       setTodos([]);
     } finally {
       setLoading(false);
-      loadingRef.current = false;
     }
-  }, [authState.user]);
+  }, []);
 
-  // 初回読み込みのみ実行
+  // 認証状態の変化を監視
   useEffect(() => {
-    if (authState.user && !initialLoadDone.current) {
-      console.log('初回TODOデータ読み込みを開始');
-      loadTodos();
-    } else if (!authState.user) {
-      setTodos([]);
-      setLoading(false);
-      initialLoadDone.current = false;
-    }
-  }, [authState.user, loadTodos]);
+    const handleAuthChange = async () => {
+      // 認証状態がまだ読み込み中の場合は何もしない
+      if (authState.loading) {
+        console.log('認証状態が読み込み中のため、TODO読み込みを待機');
+        return;
+      }
+
+      const newUserId = authState.user?.id || null;
+      
+      // ユーザーが変わった場合のみ処理
+      if (newUserId !== currentUserId.current) {
+        console.log('ユーザーが変更されました:', {
+          previous: currentUserId.current,
+          current: newUserId
+        });
+        
+        currentUserId.current = newUserId;
+        isInitialized.current = false;
+
+        if (newUserId) {
+          // ログイン時：TODOを読み込み
+          await loadTodos(newUserId);
+          isInitialized.current = true;
+        } else {
+          // ログアウト時：TODOをクリア
+          console.log('ログアウトのため、TODOをクリア');
+          setTodos([]);
+          setLoading(false);
+          isInitialized.current = true;
+        }
+      } else if (!isInitialized.current && newUserId) {
+        // 同じユーザーだが初期化されていない場合
+        console.log('同じユーザーの初期化を実行');
+        await loadTodos(newUserId);
+        isInitialized.current = true;
+      } else {
+        // 変更なし、または既に初期化済み
+        console.log('TODO読み込みをスキップ（変更なしまたは初期化済み）');
+      }
+    };
+
+    handleAuthChange();
+  }, [authState.loading, authState.user?.id, loadTodos]);
 
   const addTodo = useCallback(async (
     title: string, 
@@ -100,9 +124,14 @@ export function useTodos() {
     reminderTime?: number,
     repeatType?: RepeatType
   ) => {
-    if (!authState.user) return null;
+    if (!authState.user) {
+      console.error('ユーザーがログインしていないため、TODO追加をスキップ');
+      return null;
+    }
 
     try {
+      console.log('新しいTODOを追加中:', title);
+
       const newTodo = {
         user_id: authState.user.id,
         title,
@@ -153,9 +182,14 @@ export function useTodos() {
   }, [authState.user]);
 
   const updateTodo = useCallback(async (id: string, updates: Partial<Omit<Todo, 'id' | 'createdAt'>>) => {
-    if (!authState.user) return;
+    if (!authState.user) {
+      console.error('ユーザーがログインしていないため、TODO更新をスキップ');
+      return;
+    }
 
     try {
+      console.log('TODOを更新中:', id);
+
       const updateData: any = {
         updated_at: new Date().toISOString()
       };
@@ -194,9 +228,14 @@ export function useTodos() {
   }, [authState.user]);
 
   const deleteTodo = useCallback(async (id: string) => {
-    if (!authState.user) return;
+    if (!authState.user) {
+      console.error('ユーザーがログインしていないため、TODO削除をスキップ');
+      return;
+    }
 
     try {
+      console.log('TODOを削除中:', id);
+
       const { error } = await supabase
         .from('todos')
         .delete()
@@ -218,7 +257,10 @@ export function useTodos() {
 
   const toggleTodo = useCallback(async (id: string) => {
     const todo = todos.find(t => t.id === id);
-    if (!todo) return;
+    if (!todo) {
+      console.error('指定されたTODOが見つかりません:', id);
+      return;
+    }
 
     await updateTodo(id, { completed: !todo.completed });
   }, [todos, updateTodo]);
@@ -240,11 +282,16 @@ export function useTodos() {
 
   // 手動リロード機能（緊急時のみ使用）
   const forceReload = useCallback(async () => {
+    if (!authState.user) {
+      console.log('ユーザーがログインしていないため、強制リロードをスキップ');
+      return;
+    }
+    
     console.log('強制リロードを実行します');
-    initialLoadDone.current = false;
-    loadingRef.current = false;
-    await loadTodos();
-  }, [loadTodos]);
+    isInitialized.current = false;
+    await loadTodos(authState.user.id);
+    isInitialized.current = true;
+  }, [authState.user, loadTodos]);
 
   return {
     todos,

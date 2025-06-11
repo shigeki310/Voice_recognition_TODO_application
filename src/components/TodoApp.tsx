@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { ViewMode, RepeatType } from '../types/todo';
 import { useTodos } from '../hooks/useTodos';
+import { useAuth } from '../hooks/useAuth';
 import { Header } from './Header';
 import { TodoList } from './TodoList';
 import { TodoForm } from './TodoForm';
@@ -17,12 +18,17 @@ export function TodoApp() {
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [formSelectedDate, setFormSelectedDate] = useState<Date | undefined>(undefined);
 
+  const { authState } = useAuth();
   const { todos, loading, addTodo, updateTodo, deleteTodo, toggleTodo } = useTodos();
 
-  // 初回ローディングのみ表示
-  if (loading && todos.length === 0) {
+  // 認証状態が読み込み中の場合のみローディングを表示
+  if (authState.loading) {
+    console.log('認証状態が読み込み中のため、ローディングを表示');
     return <LoadingSpinner />;
   }
+
+  // TODOの読み込み中でも、認証が完了していればUIを表示
+  // （ローディング状態は個別のコンポーネントで管理）
 
   const handleAddTodo = () => {
     setEditingTodo(null);
@@ -109,15 +115,24 @@ export function TodoApp() {
       />
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        <TodoList
-          todos={todos}
-          viewMode={viewMode}
-          selectedDate={selectedDate}
-          onToggle={toggleTodo}
-          onEdit={handleEditTodo}
-          onDelete={deleteTodo}
-          onDateClick={handleDateClick}
-        />
+        {loading && todos.length === 0 ? (
+          <div className="text-center py-8">
+            <div className="inline-flex items-center gap-2 text-slate-600">
+              <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
+              TODOを読み込み中...
+            </div>
+          </div>
+        ) : (
+          <TodoList
+            todos={todos}
+            viewMode={viewMode}
+            selectedDate={selectedDate}
+            onToggle={toggleTodo}
+            onEdit={handleEditTodo}
+            onDelete={deleteTodo}
+            onDateClick={handleDateClick}
+          />
+        )}
       </main>
 
       <AnimatePresence>
