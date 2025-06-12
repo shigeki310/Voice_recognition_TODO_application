@@ -8,7 +8,6 @@ import { TodoList } from './TodoList';
 import { TodoForm } from './TodoForm';
 import { VoiceButton } from './VoiceButton';
 import { ReminderManager } from './ReminderManager';
-import { SimpleReminderManager } from './SimpleReminderManager';
 import { LoadingSpinner } from './ui/LoadingSpinner';
 
 export function TodoApp() {
@@ -18,9 +17,6 @@ export function TodoApp() {
   const [editingTodo, setEditingTodo] = useState(null);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [formSelectedDate, setFormSelectedDate] = useState<Date | undefined>(undefined);
-  
-  // 通知システムの選択（開発用）
-  const [useSimpleNotifications, setUseSimpleNotifications] = useState(false);
 
   const { authState } = useAuth();
   const { todos, loading, addTodo, updateTodo, deleteTodo, toggleTodo } = useTodos();
@@ -149,24 +145,7 @@ export function TodoApp() {
 
       <VoiceButton onTranscript={handleVoiceTranscript} />
       
-      {/* 通知システムの選択 */}
-      {useSimpleNotifications ? (
-        <SimpleReminderManager todos={todos} />
-      ) : (
-        <ReminderManager todos={todos} />
-      )}
-
-      {/* 開発モード用の通知システム切り替えボタン */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="fixed top-4 right-4 bg-white border border-slate-200 rounded-lg p-2 shadow-lg">
-          <button
-            onClick={() => setUseSimpleNotifications(!useSimpleNotifications)}
-            className="text-xs px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded transition-colors"
-          >
-            {useSimpleNotifications ? '高度な通知' : 'シンプル通知'}
-          </button>
-        </div>
-      )}
+      <ReminderManager todos={todos} />
     </div>
   );
 }
