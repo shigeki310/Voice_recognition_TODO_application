@@ -54,6 +54,18 @@ export default {
           '50%': { transform: 'translateY(-5px)' },
         },
       },
+      screens: {
+        'xs': '320px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1440px',
+        '3xl': '1920px',
+      },
+      maxWidth: {
+        '8xl': '1920px',
+      },
     },
   },
   plugins: [],

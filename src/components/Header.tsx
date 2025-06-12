@@ -123,12 +123,12 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
         animate={{ opacity: 1, y: 0 }}
         className="bg-white/90 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-30"
       >
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16">
           {/* 1. トップヘッダー */}
-          <div className="flex items-center justify-between py-4">
+          <div className="flex items-center justify-between py-3 sm:py-4">
             {/* 左側：アプリタイトル */}
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                 Voice TODO
               </h1>
             </div>
@@ -174,9 +174,9 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
           )}
 
           {/* 3. セカンドヘッダー */}
-          <div className="flex items-center justify-between pb-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 pb-4">
             {/* 左側：日付表示とナビゲーション */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* 日付ナビゲーション */}
               {isNavigationEnabled && (
                 <div className="flex items-center gap-1">
@@ -206,12 +206,12 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex items-center gap-2"
+                className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2"
               >
-                <h2 className="text-lg font-semibold text-slate-800">
+                <h2 className="text-base sm:text-lg font-semibold text-slate-800">
                   {getDateDisplay()}
                 </h2>
-                <span className="text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                <span className="text-xs sm:text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-full w-fit">
                   {taskCount}件のタスク
                 </span>
               </motion.div>
@@ -225,10 +225,10 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
+              className="flex items-center justify-center sm:justify-start gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
             >
               <PlusIcon className="w-4 h-4" />
-              追加
+              <span className="hidden sm:inline">追加</span>
             </motion.button>
           </div>
           

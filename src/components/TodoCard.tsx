@@ -115,7 +115,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
         exit={{ opacity: 0, scale: 0.9 }}
         whileHover={{ scale: 1.02 }}
         className={clsx(
-          'relative p-2 rounded-lg border group cursor-pointer transition-all duration-200 bg-white shadow-sm hover:shadow-md',
+          'relative p-1.5 sm:p-2 rounded-lg border group cursor-pointer transition-all duration-200 bg-white shadow-sm hover:shadow-md',
           todo.completed && 'opacity-60'
         )}
         onClick={() => onEdit(todo)}
@@ -123,7 +123,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
         {/* 優先度アクセント */}
         <div className={clsx('absolute left-0 top-0 bottom-0 w-1 rounded-l-lg', priority.accent)} />
         
-        <div className="flex items-start gap-2 ml-1">
+        <div className="flex items-start gap-1 sm:gap-2 ml-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -132,9 +132,9 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
             className="flex-shrink-0 mt-0.5"
           >
             {todo.completed ? (
-              <CheckCircleIconSolid className="w-3 h-3 text-green-500" />
+              <CheckCircleIconSolid className="w-2.5 sm:w-3 h-2.5 sm:h-3 text-green-500" />
             ) : (
-              <CheckCircleIcon className="w-3 h-3 text-slate-400 hover:text-green-500" />
+              <CheckCircleIcon className="w-2.5 sm:w-3 h-2.5 sm:h-3 text-slate-400 hover:text-green-500" />
             )}
           </button>
 
@@ -146,36 +146,37 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               )}
               title={todo.title}
             >
-              {truncateTitle(todo.title, 12)}
+              {truncateTitle(todo.title, compact ? 8 : 12)}
             </h3>
             
             {/* 統合された時間情報 */}
             <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 <CalendarIcon className="w-2 h-2 text-slate-400" />
                 <span className={clsx(
+                  'text-xs',
                   isOverdue && !todo.completed ? 'text-red-500 font-medium' : 'text-slate-500'
                 )}>
                   {format(todo.dueDate, 'M/d', { locale: ja })}
                 </span>
                 {timeDisplay && (
                   <>
-                    <ClockIcon className="w-2 h-2 text-slate-400 ml-1" />
-                    <span className="text-slate-600">{timeDisplay}</span>
+                    <ClockIcon className="w-2 h-2 text-slate-400 ml-0.5 sm:ml-1" />
+                    <span className="text-slate-600 text-xs">{timeDisplay}</span>
                   </>
                 )}
               </div>
               
               {/* リマインダーと優先度を横並び */}
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-0.5 sm:gap-1">
                 {reminderDisplay && (
                   <div className="flex items-center gap-0.5 px-1 py-0.5 rounded text-xs bg-blue-50">
                     <BellIcon className="w-2 h-2 text-blue-500" />
-                    <span className="text-blue-600 text-xs">{reminderDisplay}</span>
+                    <span className="text-blue-600 text-xs hidden sm:inline">{reminderDisplay}</span>
                   </div>
                 )}
                 <div className={clsx(
-                  'w-2 h-2 rounded-full',
+                  'w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full',
                   priority.accent
                 )} title={`優先度: ${priority.label}`} />
               </div>
@@ -191,7 +192,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               }}
               className="p-0.5 text-slate-400 hover:text-slate-600 rounded"
             >
-              <PencilIcon className="w-2.5 h-2.5" />
+              <PencilIcon className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
             </button>
             <button
               onClick={(e) => {
@@ -200,7 +201,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               }}
               className="p-0.5 text-slate-400 hover:text-red-500 rounded"
             >
-              <TrashIcon className="w-2.5 h-2.5" />
+              <TrashIcon className="w-2 sm:w-2.5 h-2 sm:h-2.5" />
             </button>
           </div>
         </div>
@@ -217,47 +218,47 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
       exit={{ opacity: 0, y: -20 }}
       whileHover={{ y: -2 }}
       className={clsx(
-        'relative bg-white rounded-xl shadow-sm border border-slate-200/60 hover:shadow-md transition-all duration-200 p-4 group',
+        'relative bg-white rounded-xl shadow-sm border border-slate-200/60 hover:shadow-md transition-all duration-200 p-3 sm:p-4 group',
         todo.completed && 'opacity-60'
       )}
     >
       {/* 優先度アクセント */}
       <div className={clsx('absolute left-0 top-0 bottom-0 w-1 rounded-l-xl', priority.accent)} />
       
-      <div className="flex items-start gap-3 ml-1">
+      <div className="flex items-start gap-2 sm:gap-3 ml-1">
         <button
           onClick={() => onToggle(todo.id)}
           className="flex-shrink-0 mt-0.5 transition-colors duration-200"
         >
           {todo.completed ? (
-            <CheckCircleIconSolid className="w-5 h-5 text-green-500" />
+            <CheckCircleIconSolid className="w-4 sm:w-5 h-4 sm:h-5 text-green-500" />
           ) : (
-            <CheckCircleIcon className="w-5 h-5 text-slate-400 hover:text-green-500" />
+            <CheckCircleIcon className="w-4 sm:w-5 h-4 sm:h-5 text-slate-400 hover:text-green-500" />
           )}
         </button>
 
         <div className="flex-1 min-w-0">
           <h3 className={clsx(
-            'font-medium text-slate-900 mb-2',
+            'font-medium text-slate-900 mb-2 text-sm sm:text-base',
             todo.completed && 'line-through text-slate-500'
           )}>
             {todo.title}
           </h3>
           
           {todo.description && (
-            <p className="text-sm text-slate-600 mb-3 line-clamp-2">
+            <p className="text-xs sm:text-sm text-slate-600 mb-3 line-clamp-2">
               {todo.description}
             </p>
           )}
 
           {/* 統合された情報バー */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
             {/* 左側：日付と時刻 */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-1">
                 <CalendarIcon className="w-3 h-3 text-slate-400" />
                 <span className={clsx(
-                  'text-sm',
+                  'text-xs sm:text-sm',
                   isOverdue && !todo.completed && 'text-red-500 font-medium',
                   isDueToday && !todo.completed && 'text-amber-600 font-medium'
                 )}>
@@ -268,7 +269,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               {timeDisplay && (
                 <div className="flex items-center gap-1">
                   <ClockIcon className="w-3 h-3 text-slate-400" />
-                  <span className="text-sm text-slate-600">{timeDisplay}</span>
+                  <span className="text-xs sm:text-sm text-slate-600">{timeDisplay}</span>
                 </div>
               )}
             </div>
@@ -302,13 +303,13 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
             onClick={() => onEdit(todo)}
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors duration-200"
           >
-            <PencilIcon className="w-4 h-4" />
+            <PencilIcon className="w-3 sm:w-4 h-3 sm:h-4" />
           </button>
           <button
             onClick={() => onDelete(todo.id)}
             className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors duration-200"
           >
-            <TrashIcon className="w-4 h-4" />
+            <TrashIcon className="w-3 sm:w-4 h-3 sm:h-4" />
           </button>
         </div>
       </div>

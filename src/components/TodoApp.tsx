@@ -111,7 +111,7 @@ export function TodoApp() {
         todos={todos}
       />
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 sm:py-6">
         {loading && todos.length === 0 ? (
           <div className="text-center py-8">
             <div className="inline-flex items-center gap-2 text-slate-600">

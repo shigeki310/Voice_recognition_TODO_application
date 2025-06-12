@@ -126,8 +126,8 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     return (
       <div className="text-center py-12">
         <div className="w-16 h-16 mx-auto mb-4 bg-slate-100 rounded-full flex items-center justify-center">
-          <svg className="w-8 h-8 text-slate-400\" fill="none\" stroke="currentColor\" viewBox="0 0 24 24">
-            <path strokeLinecap="round\" strokeLinejoin="round\" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
           </svg>
         </div>
         <h3 className="text-lg font-medium text-slate-900 mb-2">本日はタスクがありません</h3>
@@ -155,7 +155,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     const dayTodos = groupedTodos[format(selectedDate, 'yyyy-MM-dd')] as Todo[];
     
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 sm:space-y-3">
         <AnimatePresence mode="popLayout">
           {dayTodos.map(todo => (
             <TodoCard
@@ -176,7 +176,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     const monthGroups = groupedTodos as Record<string, Todo[]>;
     
     return (
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
         <AnimatePresence mode="popLayout">
           {Object.entries(monthGroups).map(([monthKey, monthTodos]) => {
             const monthDate = new Date(monthKey + '-01');
@@ -192,15 +192,15 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
               >
                 {/* 月のヘッダー */}
                 <div className="flex items-center gap-3">
-                  <h2 className="text-xl font-bold text-slate-900">{monthLabel}</h2>
+                  <h2 className="text-lg sm:text-xl font-bold text-slate-900">{monthLabel}</h2>
                   <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                  <span className="text-xs sm:text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
                     {monthTodos.length}件のタスク
                   </span>
                 </div>
 
                 {/* タスクリスト */}
-                <div className="space-y-3">
+                <div className="space-y-2 sm:space-y-3">
                   <AnimatePresence mode="popLayout">
                     {monthTodos.map(todo => (
                       <motion.div
@@ -208,7 +208,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className="ml-4"
+                        className="ml-2 sm:ml-4"
                       >
                         <TodoCard
                           todo={todo}
@@ -237,7 +237,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     return (
       <div className="space-y-4">
         {/* 曜日ヘッダー */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {days.map(day => {
             const isToday = isSameDay(day, new Date());
             const dayKey = format(day, 'yyyy-MM-dd');
@@ -247,7 +247,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
               <div key={dayKey} className="min-h-0">
                 <button
                   onClick={() => onDateClick?.(day)}
-                  className={`w-full text-center p-2 rounded-lg mb-2 transition-all duration-200 hover:scale-105 ${
+                  className={`w-full text-center p-1 sm:p-2 rounded-lg mb-2 transition-all duration-200 hover:scale-105 ${
                     isToday 
                       ? 'bg-primary-100 text-primary-700 font-medium hover:bg-primary-200' 
                       : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
@@ -265,7 +265,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
                     </div>
                   )}
                   <div className="mt-1">
-                    <PlusIcon className="w-3 h-3 mx-auto opacity-50" />
+                    <PlusIcon className="w-2 sm:w-3 h-2 sm:h-3 mx-auto opacity-50" />
                   </div>
                 </button>
               </div>
@@ -274,7 +274,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
         </div>
 
         {/* タスクカード - 横並び表示 */}
-        <div className="grid grid-cols-7 gap-2 min-h-[400px]">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 min-h-[300px] sm:min-h-[400px]">
           {days.map(day => {
             const dayKey = format(day, 'yyyy-MM-dd');
             const dayTodos = (groupedTodos[dayKey] as Todo[]) || [];
@@ -311,7 +311,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
     const weeks = eachWeekOfInterval({ start: monthStart, end: monthEnd }, { weekStartsOn: 0 });
 
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {weeks.map((weekStart, weekIndex) => {
           const weekEnd = endOfWeek(weekStart, { weekStartsOn: 0 });
           const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
@@ -381,7 +381,7 @@ export function TodoList({ todos, viewMode, selectedDate, onToggle, onEdit, onDe
               </div>
 
               {/* タスクカード - 横並び表示 */}
-              <div className="grid grid-cols-7 gap-1 min-h-[150px]">
+              <div className="grid grid-cols-7 gap-1 min-h-[120px] sm:min-h-[150px]">
                 {days.map(day => {
                   const dayKey = format(day, 'yyyy-MM-dd');
                   const dayTodos = weekData[dayKey] || [];
