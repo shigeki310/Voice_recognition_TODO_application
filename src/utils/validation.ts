@@ -46,11 +46,11 @@ export const sanitizeInput = (input: string): string => {
     .trim()
     .replace(/[<>\"'&]/g, (match) => {
       const escapeMap: Record<string, string> = {
-        '<': '<',
-        '>': '>',
-        '"': '"',
-        "'": ''',
-        '&': '&'
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+        '&': '&amp;'
       };
       return escapeMap[match] || match;
     });
