@@ -4,6 +4,7 @@ import { AuthProvider } from './components/auth/AuthProvider';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { RegisterForm } from './components/auth/RegisterForm';
 import { LoginForm } from './components/auth/LoginForm';
+import { PasswordResetForm } from './components/auth/PasswordResetForm';
 import { TodoApp } from './components/TodoApp';
 
 export default function App() {
@@ -13,6 +14,7 @@ export default function App() {
         <Routes>
           <Route path="/register" element={<RegisterForm />} />
           <Route path="/login" element={<LoginForm />} />
+          <Route path="/password-reset" element={<PasswordResetForm />} />
           <Route 
             path="/" 
             element={
@@ -21,7 +23,7 @@ export default function App() {
               </ProtectedRoute>
             } 
           />
-          <Route path="*" element={<Navigate to="/\" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </AuthProvider>

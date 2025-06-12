@@ -30,17 +30,27 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'パスワードを入力してください')
 });
 
+// パスワードリセットフォームのバリデーションスキーマ
+export const passwordResetSchema = z.object({
+  username: usernameSchema,
+  newPassword: passwordSchema,
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: 'パスワードが一致しません',
+  path: ['confirmPassword']
+});
+
 // 入力値のサニタイズ
 export const sanitizeInput = (input: string): string => {
   return input
     .trim()
     .replace(/[<>\"'&]/g, (match) => {
       const escapeMap: Record<string, string> = {
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#x27;',
-        '&': '&amp;'
+        '<': '<',
+        '>': '>',
+        '"': '"',
+        "'": ''',
+        '&': '&'
       };
       return escapeMap[match] || match;
     });

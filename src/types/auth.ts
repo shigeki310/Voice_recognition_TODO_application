@@ -22,6 +22,12 @@ export interface LoginFormData {
   password: string;
 }
 
+export interface PasswordResetFormData {
+  username: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
 export interface ValidationError {
   field: string;
   message: string;

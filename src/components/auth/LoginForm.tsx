@@ -125,6 +125,16 @@ export function LoginForm() {
             )}
           </div>
 
+          {/* パスワードを忘れた場合のリンク */}
+          <div className="text-right">
+            <Link
+              to="/password-reset"
+              className="text-sm text-primary-600 hover:text-primary-500 transition-colors duration-200"
+            >
+              パスワードを忘れた場合
+            </Link>
+          </div>
+
           {/* エラーメッセージ */}
           {errors.root && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">

@@ -1,6 +1,6 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, AuthState, RegisterFormData, LoginFormData } from '../types/auth';
+import { User, AuthState, RegisterFormData, LoginFormData, PasswordResetFormData } from '../types/auth';
 import { sanitizeInput, checkUsernameAvailability, hashPassword, verifyPassword } from '../utils/validation';
 
 const AuthContext = createContext<{
@@ -11,6 +11,8 @@ const AuthContext = createContext<{
   checkUsername: (username: string) => Promise<boolean>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   deleteAccount: () => Promise<{ success: boolean; error?: string }>;
+  verifyUserForReset: (username: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (data: PasswordResetFormData) => Promise<{ success: boolean; error?: string }>;
 } | null>(null);
 
 export const useAuth = () => {
@@ -255,6 +257,66 @@ export const useAuthProvider = () => {
     }
   };
 
+  const verifyUserForReset = async (username: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const sanitizedUsername = sanitizeInput(username);
+
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('id, username')
+        .eq('username', sanitizedUsername)
+        .single();
+
+      if (error || !userData) {
+        return { success: false, error: 'ユーザーが見つかりません' };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Verify user error:', error);
+      return { success: false, error: 'ユーザーの確認に失敗しました' };
+    }
+  };
+
+  const resetPassword = async (data: PasswordResetFormData): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const sanitizedUsername = sanitizeInput(data.username);
+
+      // ユーザーの存在確認
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', sanitizedUsername)
+        .single();
+
+      if (fetchError || !userData) {
+        return { success: false, error: 'ユーザーが見つかりません' };
+      }
+
+      // 新しいパスワードをハッシュ化
+      const newPasswordHash = await hashPassword(data.newPassword);
+
+      // パスワードを更新
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          password_hash: newPasswordHash,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userData.id);
+
+      if (updateError) {
+        console.error('Password reset error:', updateError);
+        return { success: false, error: 'パスワードの更新に失敗しました' };
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      return { success: false, error: error.message || 'パスワードのリセットに失敗しました' };
+    }
+  };
+
   return {
     authState,
     register,
@@ -262,7 +324,9 @@ export const useAuthProvider = () => {
     logout,
     checkUsername,
     changePassword,
-    deleteAccount
+    deleteAccount,
+    verifyUserForReset,
+    resetPassword
   };
 };
 
