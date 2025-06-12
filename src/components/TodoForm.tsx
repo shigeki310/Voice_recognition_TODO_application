@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Todo, Priority, RepeatType } from '../types/todo';
 import { XMarkIcon, CalendarIcon, FlagIcon, ClockIcon, ArrowPathIcon, BellIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
-import { AnalogTimePicker } from './ui/AnalogTimePicker';
+import { DigitalTimePicker } from './ui/DigitalTimePicker';
 
 interface TodoFormProps {
   todo?: Todo;
@@ -123,6 +123,16 @@ export function TodoForm({
     setShowTimePicker(false);
   };
 
+  const formatTimeDisplay = (timeString: string) => {
+    if (!timeString) return '時刻を選択';
+    
+    const [hours, minutes] = timeString.split(':').map(Number);
+    const hour12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    const ampm = hours < 12 ? 'AM' : 'PM';
+    
+    return `${hour12}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -137,25 +147,29 @@ export function TodoForm({
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-3xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto border border-slate-200/60"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          backdropFilter: 'blur(20px)'
+        }}
       >
-        <div className="flex items-center justify-between p-6 border-b border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-900">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200/60 bg-gradient-to-r from-slate-50 to-slate-100">
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
             {todo ? 'タスクを編集' : '新しいタスク'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors duration-200"
+            className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-white/80 rounded-xl transition-all duration-200"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* タイトル */}
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="title" className="block text-sm font-semibold text-slate-700 mb-3">
               タイトル
             </label>
             <input
@@ -163,7 +177,7 @@ export function TodoForm({
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+              className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
               placeholder="タスクのタイトルを入力"
               required
               autoFocus
@@ -172,7 +186,7 @@ export function TodoForm({
 
           {/* 説明 */}
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="description" className="block text-sm font-semibold text-slate-700 mb-3">
               説明（任意）
             </label>
             <textarea
@@ -180,7 +194,7 @@ export function TodoForm({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 resize-none"
+              className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 resize-none bg-white/80 backdrop-blur-sm"
               placeholder="詳細な説明を入力"
             />
           </div>
@@ -188,7 +202,7 @@ export function TodoForm({
           {/* 優先度と期限日 */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="priority" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="priority" className="block text-sm font-semibold text-slate-700 mb-3">
                 <FlagIcon className="w-4 h-4 inline mr-1" />
                 優先度
               </label>
@@ -196,7 +210,7 @@ export function TodoForm({
                 id="priority"
                 value={priority}
                 onChange={(e) => setPriority(e.target.value as Priority)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+                className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
               >
                 <option value="low">低</option>
                 <option value="medium">中</option>
@@ -205,7 +219,7 @@ export function TodoForm({
             </div>
 
             <div>
-              <label htmlFor="dueDate" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="dueDate" className="block text-sm font-semibold text-slate-700 mb-3">
                 <CalendarIcon className="w-4 h-4 inline mr-1" />
                 期限日
               </label>
@@ -214,7 +228,7 @@ export function TodoForm({
                 id="dueDate"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+                className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
                 required
               />
             </div>
@@ -222,22 +236,23 @@ export function TodoForm({
 
           {/* 時刻指定 */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-semibold text-slate-700 mb-3">
               <ClockIcon className="w-4 h-4 inline mr-1" />
               時刻
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => setShowTimePicker(true)}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 text-left bg-white hover:bg-slate-50"
+                className="flex-1 px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 text-left bg-white/80 backdrop-blur-sm hover:bg-slate-50 font-mono"
+                style={{ fontFeatureSettings: '"tnum"' }}
               >
-                {dueTime || '時刻を選択'}
+                {formatTimeDisplay(dueTime)}
               </button>
               <button
                 type="button"
                 onClick={() => setDueTime(getCurrentTime())}
-                className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200"
+                className="px-4 py-3 text-sm bg-gradient-to-r from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 rounded-2xl transition-all duration-200 font-semibold"
                 title="現在時刻を設定"
               >
                 現在
@@ -245,33 +260,33 @@ export function TodoForm({
               <button
                 type="button"
                 onClick={() => setDueTime('')}
-                className="px-3 py-2 text-sm bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors duration-200"
+                className="px-4 py-3 text-sm bg-gradient-to-r from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 text-slate-700 rounded-2xl transition-all duration-200 font-semibold"
                 title="時刻をクリア"
               >
                 クリア
               </button>
             </div>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-2 font-medium">
               新規作成時は現在時刻が自動設定されます
             </p>
           </div>
 
           {/* リマインダー設定 */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                 <BellIcon className="w-4 h-4" />
                 リマインダー
               </label>
               <button
                 type="button"
                 onClick={() => setReminderEnabled(!reminderEnabled)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ${
-                  reminderEnabled ? 'bg-primary-600' : 'bg-slate-200'
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-all duration-300 ${
+                  reminderEnabled ? 'bg-primary-600 shadow-lg' : 'bg-slate-300'
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform duration-300 shadow-sm ${
                     reminderEnabled ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
@@ -286,13 +301,13 @@ export function TodoForm({
                 className="space-y-3"
               >
                 <div>
-                  <label className="block text-sm text-slate-600 mb-1">
+                  <label className="block text-sm font-medium text-slate-600 mb-2">
                     通知タイミング
                   </label>
                   <select
                     value={reminderTime}
                     onChange={(e) => setReminderTime(Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+                    className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
                   >
                     <option value={10}>10分前</option>
                     <option value={30}>30分前</option>
@@ -301,7 +316,7 @@ export function TodoForm({
                     <option value={1440}>1日前</option>
                     <option value={10080}>1週間前</option>
                   </select>
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-2 font-medium">
                     ※ 通知は設定した時間に表示されます
                   </p>
                 </div>
@@ -311,7 +326,7 @@ export function TodoForm({
 
           {/* 繰り返し設定 */}
           <div>
-            <label htmlFor="repeatType" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="repeatType" className="block text-sm font-semibold text-slate-700 mb-3">
               <ArrowPathIcon className="w-4 h-4 inline mr-1" />
               繰り返し
             </label>
@@ -319,7 +334,7 @@ export function TodoForm({
               id="repeatType"
               value={repeatType}
               onChange={(e) => setRepeatType(e.target.value as RepeatType)}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
+              className="w-full px-4 py-3 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 bg-white/80 backdrop-blur-sm"
             >
               <option value="none">繰り返しなし</option>
               <option value="daily">毎日</option>
@@ -333,13 +348,13 @@ export function TodoForm({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg font-medium transition-colors duration-200"
+              className="flex-1 px-6 py-3 text-slate-700 bg-gradient-to-r from-slate-100 to-slate-200 hover:from-slate-200 hover:to-slate-300 rounded-2xl font-semibold transition-all duration-200"
             >
               キャンセル
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors duration-200"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white rounded-2xl font-semibold transition-all duration-200 shadow-lg hover:shadow-xl"
             >
               {todo ? '更新' : '作成'}
             </button>
@@ -347,14 +362,14 @@ export function TodoForm({
         </form>
       </motion.div>
 
-      {/* アナログタイムピッカーモーダル */}
+      {/* デジタルタイムピッカーモーダル */}
       <AnimatePresence>
         {showTimePicker && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-60 flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-60 flex items-center justify-center p-4"
             onClick={handleTimePickerClose}
           >
             <motion.div
@@ -363,7 +378,7 @@ export function TodoForm({
               exit={{ scale: 0.9, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <AnalogTimePicker
+              <DigitalTimePicker
                 value={dueTime}
                 onChange={handleTimePickerChange}
                 onClose={handleTimePickerClose}
