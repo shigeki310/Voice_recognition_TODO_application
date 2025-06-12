@@ -17,7 +17,8 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
     scheduledCount,
     notificationInterval,
     showDebugInfo,
-    debugInfo
+    debugInfo,
+    scheduledReminders
   } = useNotifications();
 
   const lastProcessedTodos = useRef<string>('');
@@ -94,7 +95,7 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
   useEffect(() => {
     // 初期化が完了していない場合は処理をスキップ
     if (!initializationComplete.current) {
-      console.log('ReminderManager: 初期化が完了していないため、処理をスキップします', {
+      console.log('🔄 ReminderManager: 初期化が完了していないため、処理をスキップします', {
         permission,
         supported,
         initializationComplete: initializationComplete.current
@@ -102,16 +103,17 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       return;
     }
 
-    // TODOリストのハッシュを作成して変更を検出
+    // リマインダーが有効なTODOのみを抽出
     const activeTodos = todos
-      .filter(t => t.reminderEnabled && !t.completed)
+      .filter(t => t.reminderEnabled && !t.completed && t.reminderTime)
       .map(t => ({
         id: t.id,
         title: t.title,
         dueDate: t.dueDate.getTime(),
         dueTime: t.dueTime,
         reminderTime: t.reminderTime,
-        completed: t.completed
+        completed: t.completed,
+        reminderEnabled: t.reminderEnabled
       }))
       .sort((a, b) => a.id.localeCompare(b.id));
 
@@ -119,6 +121,7 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
 
     // 前回と同じ内容の場合は処理をスキップ
     if (todosHash === lastProcessedTodos.current) {
+      console.log('🔄 ReminderManager: TODOリストに変更がないため、処理をスキップします');
       return;
     }
 
@@ -129,9 +132,34 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       todosWithReminders: activeTodos.length,
       permission,
       supported,
-      notificationIntervalMinutes: notificationInterval / (1000 * 60),
-      debugInfo
+      notificationIntervalSeconds: notificationInterval / 1000,
+      currentScheduledCount: scheduledCount
     });
+
+    // 詳細なTODO情報をログ出力
+    if (activeTodos.length > 0) {
+      console.group('📋 リマインダー対象のTODO詳細');
+      activeTodos.forEach(todo => {
+        const originalTodo = todos.find(t => t.id === todo.id);
+        if (originalTodo) {
+          console.log(`📝 ${todo.title}`, {
+            期限日: new Date(todo.dueDate).toLocaleString(),
+            時刻: todo.dueTime || '未設定',
+            リマインダー: `${todo.reminderTime}分前`,
+            完了状態: todo.completed ? '完了' : '未完了',
+            リマインダー有効: todo.reminderEnabled ? '有効' : '無効'
+          });
+        }
+      });
+      console.groupEnd();
+    } else {
+      console.log('📋 リマインダー対象のTODOがありません', {
+        totalTodos: todos.length,
+        completedTodos: todos.filter(t => t.completed).length,
+        todosWithoutReminder: todos.filter(t => !t.reminderEnabled).length,
+        todosWithoutReminderTime: todos.filter(t => t.reminderEnabled && !t.reminderTime).length
+      });
+    }
 
     // 通知許可がない場合は何もしない
     if (permission !== 'granted') {
@@ -143,77 +171,88 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
     }
 
     // 既存のリマインダーをすべてキャンセル
-    console.log('🧹 既存のリマインダーをクリアします');
+    console.log('🧹 既存のリマインダーをクリアします', {
+      currentScheduledCount: scheduledCount
+    });
     cancelAllReminders();
 
     // 有効なリマインダーをスケジュール
     const now = new Date();
-    const validReminders = activeTodos.filter(todo => {
-      if (!todo.reminderTime) {
-        console.log(`⚠️ リマインダー時間が設定されていません: ${todo.title}`);
-        return false;
-      }
-
-      // リマインダー時刻を計算
-      let reminderTime: Date;
-
-      if (todo.dueTime) {
-        const [hours, minutes] = todo.dueTime.split(':').map(Number);
-        const dueDateTime = new Date(todo.dueDate);
-        dueDateTime.setHours(hours, minutes, 0, 0);
-        reminderTime = new Date(dueDateTime.getTime() - (todo.reminderTime * 60 * 1000));
-      } else {
-        reminderTime = new Date(todo.dueDate - (todo.reminderTime * 60 * 1000));
-      }
-
-      const timeUntilReminder = reminderTime.getTime() - now.getTime();
-      
-      if (timeUntilReminder <= 0) {
-        console.log(`⏰ リマインダー時刻が過去です: ${todo.title} (${Math.abs(timeUntilReminder / 1000 / 60).toFixed(1)}分前)`);
-        return false;
-      }
-
-      console.log(`✅ 有効なリマインダー: ${todo.title} (${Math.round(timeUntilReminder / 1000 / 60)}分後)`);
-      return true;
+    console.log('⏰ リマインダーのスケジューリングを開始します', {
+      現在時刻: now.toLocaleString(),
+      対象TODO数: activeTodos.length
     });
-
-    console.log(`📋 スケジュール対象のリマインダー: ${validReminders.length}件`);
-
-    if (validReminders.length === 0) {
-      console.log('スケジュールするリマインダーがありません');
-      return;
-    }
 
     let successCount = 0;
-    validReminders.forEach(todoData => {
-      const todo = todos.find(t => t.id === todoData.id);
-      if (!todo) return;
+    let errorCount = 0;
+    const schedulingResults: any[] = [];
 
+    activeTodos.forEach(todoData => {
+      const todo = todos.find(t => t.id === todoData.id);
+      if (!todo) {
+        console.warn(`⚠️ TODOが見つかりません: ${todoData.id}`);
+        return;
+      }
+
+      console.log(`📅 スケジューリング中: ${todo.title}`);
+      
       const timeoutId = scheduleReminder(todo);
+      
+      const result = {
+        title: todo.title,
+        success: !!timeoutId,
+        reminderTime: todo.reminderTime,
+        dueDate: todo.dueDate.toLocaleString(),
+        dueTime: todo.dueTime
+      };
+      
+      schedulingResults.push(result);
+      
       if (timeoutId) {
         successCount++;
+        console.log(`✅ スケジュール成功: ${todo.title}`);
+      } else {
+        errorCount++;
+        console.log(`❌ スケジュール失敗: ${todo.title}`);
       }
     });
 
-    console.log(`📊 リマインダー管理結果: ${successCount}/${validReminders.length}件がスケジュールされました`);
+    console.log(`📊 リマインダー管理結果:`, {
+      成功: successCount,
+      失敗: errorCount,
+      合計: activeTodos.length,
+      現在のスケジュール数: scheduledCount
+    });
+
+    // 詳細な結果をテーブル形式で表示
+    if (schedulingResults.length > 0) {
+      console.table(schedulingResults);
+    }
 
     // クリーンアップ
     return () => {
       console.log('🧹 ReminderManager: クリーンアップを実行');
       cancelAllReminders();
     };
-  }, [todos, scheduleReminder, cancelAllReminders, permission, notificationInterval]);
+  }, [todos, scheduleReminder, cancelAllReminders, permission, notificationInterval, scheduledCount]);
 
   // 開発モード用のデバッグ情報表示
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
+      const reminderTodos = todos.filter(t => t.reminderEnabled && !t.completed);
+      
       const debugData = {
         permission,
         supported,
         scheduledCount,
-        todosWithReminders: todos.filter(t => t.reminderEnabled && !t.completed).length,
+        todosWithReminders: reminderTodos.length,
         initializationComplete: initializationComplete.current,
-        debugInfo
+        debugInfo,
+        scheduledReminders: scheduledReminders.map(r => ({
+          title: r.todoTitle,
+          reminderTime: r.reminderTime.toLocaleString(),
+          minutesUntil: Math.round((r.reminderTime.getTime() - Date.now()) / 1000 / 60)
+        }))
       };
       
       console.log('🔧 ReminderManager Debug Info:', debugData);
@@ -222,10 +261,11 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       (window as any).reminderDebug = {
         ...debugData,
         showDebugInfo,
-        todos: todos.filter(t => t.reminderEnabled && !t.completed)
+        todos: reminderTodos,
+        allTodos: todos
       };
     }
-  }, [permission, supported, scheduledCount, todos, debugInfo, showDebugInfo]);
+  }, [permission, supported, scheduledCount, todos, debugInfo, showDebugInfo, scheduledReminders]);
 
   // このコンポーネントは何も表示しない
   return null;
