@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Todo, Priority, RepeatType } from '../types/todo';
 import { XMarkIcon, CalendarIcon, FlagIcon, ClockIcon, ArrowPathIcon, BellIcon } from '@heroicons/react/24/outline';
 import { format } from 'date-fns';
+import { AnalogTimePicker } from './ui/AnalogTimePicker';
 
 interface TodoFormProps {
   todo?: Todo;
@@ -38,6 +39,7 @@ export function TodoForm({
   const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState(10); // 10分前がデフォルト
   const [repeatType, setRepeatType] = useState<RepeatType>('none');
+  const [showTimePicker, setShowTimePicker] = useState(false);
 
   // 現在時刻を取得する関数
   const getCurrentTime = () => {
@@ -111,6 +113,14 @@ export function TodoForm({
     }
     
     onClose();
+  };
+
+  const handleTimePickerChange = (time: string) => {
+    setDueTime(time);
+  };
+
+  const handleTimePickerClose = () => {
+    setShowTimePicker(false);
   };
 
   if (!isOpen) return null;
@@ -212,18 +222,18 @@ export function TodoForm({
 
           {/* 時刻指定 */}
           <div>
-            <label htmlFor="dueTime" className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               <ClockIcon className="w-4 h-4 inline mr-1" />
               時刻
             </label>
             <div className="flex items-center gap-2">
-              <input
-                type="time"
-                id="dueTime"
-                value={dueTime}
-                onChange={(e) => setDueTime(e.target.value)}
-                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200"
-              />
+              <button
+                type="button"
+                onClick={() => setShowTimePicker(true)}
+                className="flex-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors duration-200 text-left bg-white hover:bg-slate-50"
+              >
+                {dueTime || '時刻を選択'}
+              </button>
               <button
                 type="button"
                 onClick={() => setDueTime(getCurrentTime())}
@@ -336,6 +346,32 @@ export function TodoForm({
           </div>
         </form>
       </motion.div>
+
+      {/* アナログタイムピッカーモーダル */}
+      <AnimatePresence>
+        {showTimePicker && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-60 flex items-center justify-center p-4"
+            onClick={handleTimePickerClose}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AnalogTimePicker
+                value={dueTime}
+                onChange={handleTimePickerChange}
+                onClose={handleTimePickerClose}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
