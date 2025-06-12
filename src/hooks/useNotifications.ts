@@ -114,8 +114,10 @@ export function useNotifications() {
   const testBrowserNotification = useCallback(() => {
     debugLog('🧪 ブラウザ通知機能をテスト中...');
     
-    if (state.permission !== 'granted') {
-      errorLog('通知許可がないため、テスト通知をスキップします', { permission: state.permission });
+    // 直接ブラウザの許可状態をチェック
+    const currentPermission = Notification.permission;
+    if (currentPermission !== 'granted') {
+      errorLog('通知許可がないため、テスト通知をスキップします', { permission: currentPermission });
       return;
     }
     
@@ -162,7 +164,7 @@ export function useNotifications() {
     } catch (error) {
       errorLog('テスト通知の作成に失敗しました', error);
     }
-  }, [state.permission, debugLog, errorLog]);
+  }, [debugLog, errorLog]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!state.supported) {
