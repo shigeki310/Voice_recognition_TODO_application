@@ -12,6 +12,10 @@ interface NotificationState {
     successfulNotifications: number;
     schedulingAttempts: number;
     schedulingErrors: string[];
+    browserInfo: string;
+    osNotificationSettings?: string;
+    actualDisplayCount: number;
+    failedDisplayCount: number;
   };
 }
 
@@ -32,13 +36,17 @@ export function useNotifications() {
       notificationAttempts: 0,
       successfulNotifications: 0,
       schedulingAttempts: 0,
-      schedulingErrors: []
+      schedulingErrors: [],
+      browserInfo: navigator.userAgent,
+      actualDisplayCount: 0,
+      failedDisplayCount: 0
     }
   });
 
   const [scheduledReminders, setScheduledReminders] = useState<ScheduledReminder[]>([]);
   const lastNotificationTime = useRef<Record<string, number>>({});
   const initializationRef = useRef(false);
+  const notificationRefs = useRef<Map<string, Notification>>(new Map());
 
   // 通知間隔を30秒に短縮（デバッグ用）
   const NOTIFICATION_INTERVAL = 30 * 1000; // 30秒
@@ -64,6 +72,88 @@ export function useNotifications() {
     }));
   }, []);
 
+  // 通知が実際に表示されているかを検証する関数
+  const verifyNotificationDisplay = useCallback((notification: Notification, title: string) => {
+    let displayVerified = false;
+    let timeoutId: number;
+
+    // 通知の表示状態を監視
+    const checkDisplayStatus = () => {
+      // ブラウザによっては、通知が表示されない場合でもonshowが呼ばれることがある
+      // より確実な検証のため、複数の方法で確認
+      
+      // 方法1: 通知オブジェクトの状態確認
+      try {
+        // 通知が閉じられていない場合は表示されている可能性が高い
+        if (notification) {
+          debugLog('✅ 通知オブジェクトは有効です', { title });
+          displayVerified = true;
+        }
+      } catch (error) {
+        debugLog('⚠️ 通知オブジェクトの状態確認でエラー', { title, error });
+      }
+
+      // 方法2: ユーザーの操作を促すフォールバック
+      if (!displayVerified) {
+        setTimeout(() => {
+          debugLog('⚠️ 通知が表示されていない可能性があります - フォールバック通知を試行', { title });
+          
+          // より強制的な通知を試行
+          try {
+            const fallbackNotification = new Notification(`🔔 ${title}`, {
+              body: '前の通知が表示されなかった可能性があります',
+              icon: '/vite.svg',
+              tag: `fallback-${Date.now()}`,
+              requireInteraction: true,
+              silent: false,
+              renotify: true,
+              timestamp: Date.now()
+            });
+
+            fallbackNotification.onshow = () => {
+              debugLog('✅ フォールバック通知が表示されました', { title });
+              setState(prev => ({
+                ...prev,
+                debugInfo: {
+                  ...prev.debugInfo,
+                  actualDisplayCount: prev.debugInfo.actualDisplayCount + 1
+                }
+              }));
+            };
+
+            fallbackNotification.onerror = () => {
+              debugLog('❌ フォールバック通知も失敗しました', { title });
+              setState(prev => ({
+                ...prev,
+                debugInfo: {
+                  ...prev.debugInfo,
+                  failedDisplayCount: prev.debugInfo.failedDisplayCount + 1
+                }
+              }));
+            };
+
+            // フォールバック通知も自動で閉じる
+            setTimeout(() => {
+              fallbackNotification.close();
+            }, 15000);
+
+          } catch (error) {
+            errorLog('フォールバック通知の作成に失敗', error);
+          }
+        }, 3000); // 3秒後にフォールバック
+      }
+    };
+
+    // 2秒後に表示状態をチェック
+    timeoutId = window.setTimeout(checkDisplayStatus, 2000);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [debugLog, errorLog]);
+
   // 初期化処理
   useEffect(() => {
     if (initializationRef.current) return;
@@ -81,7 +171,9 @@ export function useNotifications() {
       userAgent: navigator.userAgent.substring(0, 100),
       protocol: window.location.protocol,
       isSecureContext: window.isSecureContext,
-      hostname: window.location.hostname
+      hostname: window.location.hostname,
+      platform: navigator.platform,
+      language: navigator.language
     });
 
     setState(prev => ({
@@ -122,16 +214,25 @@ export function useNotifications() {
     }
     
     try {
-      const testNotification = new Notification('Voice TODO App - システムテスト', {
-        body: '通知システムが正常に動作しています',
+      // より確実な通知設定
+      const testNotification = new Notification('🔔 Voice TODO App - システムテスト', {
+        body: '通知システムが正常に動作しています。この通知が見えていますか？',
         icon: '/vite.svg',
         tag: 'system-test',
-        requireInteraction: false,
-        silent: false,
-        timestamp: Date.now()
+        requireInteraction: true, // ユーザーの操作が必要
+        silent: false, // 音を鳴らす
+        renotify: true, // 同じtagでも再通知
+        timestamp: Date.now(),
+        // 追加のオプション
+        badge: '/vite.svg',
+        dir: 'auto',
+        lang: 'ja'
       });
 
       debugLog('✅ テスト通知オブジェクトを作成しました');
+
+      // 表示検証を開始
+      const cleanupVerification = verifyNotificationDisplay(testNotification, 'システムテスト');
 
       testNotification.onshow = () => {
         debugLog('🎉 テスト通知が表示されました!');
@@ -140,6 +241,7 @@ export function useNotifications() {
           debugInfo: {
             ...prev.debugInfo,
             successfulNotifications: prev.debugInfo.successfulNotifications + 1,
+            actualDisplayCount: prev.debugInfo.actualDisplayCount + 1,
             lastNotificationTime: new Date().toLocaleString(),
             lastError: undefined
           }
@@ -148,23 +250,49 @@ export function useNotifications() {
 
       testNotification.onerror = (error) => {
         errorLog('テスト通知でエラーが発生しました', error);
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            failedDisplayCount: prev.debugInfo.failedDisplayCount + 1
+          }
+        }));
       };
 
       testNotification.onclick = () => {
         debugLog('テスト通知がクリックされました');
+        window.focus();
         testNotification.close();
+        if (cleanupVerification) cleanupVerification();
       };
 
-      // 5秒後に自動で閉じる
+      testNotification.onclose = () => {
+        debugLog('テスト通知が閉じられました');
+        if (cleanupVerification) cleanupVerification();
+      };
+
+      // 通知を参照として保存
+      notificationRefs.current.set('system-test', testNotification);
+
+      // 10秒後に自動で閉じる
       setTimeout(() => {
         testNotification.close();
+        notificationRefs.current.delete('system-test');
         debugLog('テスト通知を自動で閉じました');
-      }, 5000);
+        if (cleanupVerification) cleanupVerification();
+      }, 10000);
 
     } catch (error) {
       errorLog('テスト通知の作成に失敗しました', error);
+      setState(prev => ({
+        ...prev,
+        debugInfo: {
+          ...prev.debugInfo,
+          failedDisplayCount: prev.debugInfo.failedDisplayCount + 1
+        }
+      }));
     }
-  }, [debugLog, errorLog]);
+  }, [debugLog, errorLog, verifyNotificationDisplay]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!state.supported) {
@@ -262,12 +390,16 @@ export function useNotifications() {
     }
 
     try {
+      // より確実な通知設定
       const notificationOptions = {
         icon: '/vite.svg',
         badge: '/vite.svg',
-        requireInteraction: true,
-        silent: false,
+        requireInteraction: true, // ユーザーの操作を要求
+        silent: false, // 音を鳴らす
+        renotify: true, // 同じtagでも再通知
         timestamp: Date.now(),
+        dir: 'auto' as NotificationDirection,
+        lang: 'ja',
         ...options
       };
 
@@ -280,6 +412,9 @@ export function useNotifications() {
 
       debugLog('✅ 通知オブジェクトが作成されました');
 
+      // 表示検証を開始
+      const cleanupVerification = verifyNotificationDisplay(notification, title);
+
       // 通知イベントハンドラー
       notification.onshow = () => {
         debugLog('🎉 通知が表示されました!', title);
@@ -288,6 +423,7 @@ export function useNotifications() {
           debugInfo: {
             ...prev.debugInfo,
             successfulNotifications: prev.debugInfo.successfulNotifications + 1,
+            actualDisplayCount: prev.debugInfo.actualDisplayCount + 1,
             lastNotificationTime: new Date().toLocaleString(),
             lastError: undefined
           }
@@ -300,30 +436,61 @@ export function useNotifications() {
 
       notification.onerror = (error) => {
         errorLog('通知表示エラー', error);
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            failedDisplayCount: prev.debugInfo.failedDisplayCount + 1
+          }
+        }));
       };
 
       notification.onclick = () => {
         debugLog('通知がクリックされました', title);
         window.focus();
         notification.close();
+        if (todoId) {
+          notificationRefs.current.delete(todoId);
+        }
+        if (cleanupVerification) cleanupVerification();
       };
 
       notification.onclose = () => {
         debugLog('通知が閉じられました', title);
+        if (todoId) {
+          notificationRefs.current.delete(todoId);
+        }
+        if (cleanupVerification) cleanupVerification();
       };
 
-      // 自動で閉じる（20秒後）
+      // 通知を参照として保存
+      if (todoId) {
+        notificationRefs.current.set(todoId, notification);
+      }
+
+      // 自動で閉じる（30秒後）
       setTimeout(() => {
         notification.close();
+        if (todoId) {
+          notificationRefs.current.delete(todoId);
+        }
         debugLog('通知を自動で閉じました', title);
-      }, 20000);
+        if (cleanupVerification) cleanupVerification();
+      }, 30000);
 
       return notification;
     } catch (error) {
       errorLog(`通知の表示に失敗しました: ${error}`, error);
+      setState(prev => ({
+        ...prev,
+        debugInfo: {
+          ...prev.debugInfo,
+          failedDisplayCount: prev.debugInfo.failedDisplayCount + 1
+        }
+      }));
       return null;
     }
-  }, [state.permission, state.supported, state.debugInfo.notificationAttempts, NOTIFICATION_INTERVAL, debugLog, errorLog]);
+  }, [state.permission, state.supported, state.debugInfo.notificationAttempts, NOTIFICATION_INTERVAL, debugLog, errorLog, verifyNotificationDisplay]);
 
   const scheduleReminder = useCallback((todo: Todo) => {
     setState(prev => ({
@@ -511,6 +678,14 @@ export function useNotifications() {
         timeoutId: reminder.timeoutId
       });
     }
+
+    // 表示中の通知も閉じる
+    const notification = notificationRefs.current.get(todoId);
+    if (notification) {
+      notification.close();
+      notificationRefs.current.delete(todoId);
+      debugLog('🔕 表示中の通知を閉じました', { todoId });
+    }
   }, [scheduledReminders, debugLog]);
 
   const cancelAllReminders = useCallback(() => {
@@ -532,6 +707,13 @@ export function useNotifications() {
     } else {
       debugLog('キャンセルするリマインダーがありません');
     }
+
+    // 表示中の通知もすべて閉じる
+    notificationRefs.current.forEach((notification, todoId) => {
+      notification.close();
+      debugLog('🔕 表示中の通知を閉じました', { todoId });
+    });
+    notificationRefs.current.clear();
   }, [scheduledReminders, debugLog]);
 
   // テスト用の即座通知機能
@@ -552,34 +734,59 @@ export function useNotifications() {
     // テスト通知は間隔制限を無視
     try {
       const notification = new Notification(`🧪 テスト通知: ${todo.title}`, {
-        body: todo.description || 'これはテスト通知です',
+        body: todo.description || 'これはテスト通知です。この通知が見えていますか？',
         tag: `test-${todo.id}`,
         icon: '/vite.svg',
-        requireInteraction: false,
+        requireInteraction: true,
+        silent: false,
+        renotify: true,
         timestamp: Date.now()
       });
 
+      // 表示検証を開始
+      const cleanupVerification = verifyNotificationDisplay(notification, `テスト: ${todo.title}`);
+
       notification.onshow = () => {
         debugLog('✅ テスト通知が表示されました');
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            actualDisplayCount: prev.debugInfo.actualDisplayCount + 1
+          }
+        }));
       };
 
       notification.onerror = (error) => {
         errorLog('テスト通知でエラーが発生しました', error);
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            failedDisplayCount: prev.debugInfo.failedDisplayCount + 1
+          }
+        }));
       };
 
       notification.onclick = () => {
         window.focus();
         notification.close();
+        if (cleanupVerification) cleanupVerification();
+      };
+
+      notification.onclose = () => {
+        if (cleanupVerification) cleanupVerification();
       };
 
       setTimeout(() => {
         notification.close();
-      }, 5000);
+        if (cleanupVerification) cleanupVerification();
+      }, 8000);
     } catch (error) {
       errorLog('テスト通知の表示に失敗しました', error);
       alert(`テスト通知の表示に失敗しました: ${error}`);
     }
-  }, [state.permission, state.supported, debugLog, errorLog]);
+  }, [state.permission, state.supported, debugLog, errorLog, verifyNotificationDisplay]);
 
   // デバッグ情報を表示する関数
   const showDebugInfo = useCallback(() => {
@@ -590,12 +797,16 @@ export function useNotifications() {
         ブラウザ: navigator.userAgent.split(' ').slice(-2).join(' '),
         プロトコル: window.location.protocol,
         セキュアコンテキスト: window.isSecureContext ? '✅' : '❌',
-        ホスト名: window.location.hostname
+        ホスト名: window.location.hostname,
+        プラットフォーム: navigator.platform,
+        言語: navigator.language
       },
       '📊 統計情報': {
         許可要求回数: state.debugInfo.permissionRequestCount,
         通知試行回数: state.debugInfo.notificationAttempts,
         成功した通知: state.debugInfo.successfulNotifications,
+        実際に表示された通知: state.debugInfo.actualDisplayCount,
+        表示に失敗した通知: state.debugInfo.failedDisplayCount,
         スケジューリング試行: state.debugInfo.schedulingAttempts,
         スケジュール済みリマインダー: scheduledReminders.length,
         通知間隔: `${NOTIFICATION_INTERVAL / 1000}秒`
@@ -633,7 +844,14 @@ export function useNotifications() {
       `許可: ${state.permission}\n` +
       `スケジュール済み: ${scheduledReminders.length}件\n` +
       `成功した通知: ${state.debugInfo.successfulNotifications}件\n` +
+      `実際に表示: ${state.debugInfo.actualDisplayCount}件\n` +
+      `表示失敗: ${state.debugInfo.failedDisplayCount}件\n` +
       `最後のエラー: ${state.debugInfo.lastError || 'なし'}\n\n` +
+      `⚠️ 通知が表示されない場合:\n` +
+      `1. ブラウザの通知設定を確認\n` +
+      `2. OSの通知設定を確認\n` +
+      `3. 集中モード/おやすみモードを確認\n` +
+      `4. ブラウザを再起動\n\n` +
       `詳細はコンソールをご確認ください。`;
 
     alert(summary);
