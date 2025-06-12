@@ -20,12 +20,16 @@ export function useNotifications() {
   const [scheduledReminders, setScheduledReminders] = useState<ScheduledReminder[]>([]);
   const lastNotificationTime = useRef<Record<string, number>>({});
 
-  // 通知間隔を10分（600000ミリ秒）に設定
-  const NOTIFICATION_INTERVAL = 10 * 60 * 1000; // 10分
+  // 通知間隔を5分（300000ミリ秒）に設定
+  const NOTIFICATION_INTERVAL = 5 * 60 * 1000; // 5分
 
   useEffect(() => {
     if ('Notification' in window) {
       setState({
+        permission: Notification.permission,
+        supported: true
+      });
+      console.log('通知機能の初期化:', {
         permission: Notification.permission,
         supported: true
       });
@@ -41,18 +45,20 @@ export function useNotifications() {
     }
 
     if (state.permission === 'granted') {
+      console.log('通知許可は既に取得済みです');
       return true;
     }
 
     try {
+      console.log('通知許可を要求中...');
       const permission = await Notification.requestPermission();
       setState(prev => ({ ...prev, permission }));
       
       if (permission === 'granted') {
-        console.log('通知許可が取得されました');
+        console.log('✅ 通知許可が取得されました');
         return true;
       } else {
-        console.warn('通知許可が拒否されました');
+        console.warn('❌ 通知許可が拒否されました:', permission);
         return false;
       }
     } catch (error) {
@@ -68,11 +74,11 @@ export function useNotifications() {
     }
 
     if (state.permission !== 'granted') {
-      console.warn('通知許可が取得されていません');
+      console.warn('通知許可が取得されていません。現在の状態:', state.permission);
       return null;
     }
 
-    // 同じTODOの通知間隔チェック（10分以内の重複通知を防ぐ）
+    // 同じTODOの通知間隔チェック（5分以内の重複通知を防ぐ）
     const now = Date.now();
     if (todoId && lastNotificationTime.current[todoId]) {
       const timeSinceLastNotification = now - lastNotificationTime.current[todoId];
@@ -86,12 +92,12 @@ export function useNotifications() {
       const notification = new Notification(title, {
         icon: '/vite.svg',
         badge: '/vite.svg',
-        requireInteraction: false,
+        requireInteraction: true, // ユーザーが操作するまで表示し続ける
         silent: false,
         ...options
       });
 
-      console.log('通知を表示しました:', title);
+      console.log('🔔 通知を表示しました:', title);
       if (todoId) {
         lastNotificationTime.current[todoId] = now;
       }
@@ -103,10 +109,10 @@ export function useNotifications() {
         notification.close();
       };
 
-      // 自動で閉じる（8秒後）
+      // 自動で閉じる（15秒後）
       setTimeout(() => {
         notification.close();
-      }, 8000);
+      }, 15000);
 
       return notification;
     } catch (error) {
@@ -135,18 +141,27 @@ export function useNotifications() {
       reminderTime = new Date(todo.dueDate.getTime() - (todo.reminderTime * 60 * 1000));
     }
 
-    if (reminderTime <= now) {
-      console.log('リマインダー時刻が既に過ぎています:', todo.title);
+    const timeUntilReminder = reminderTime.getTime() - now.getTime();
+
+    if (timeUntilReminder <= 0) {
+      console.log('⚠️ リマインダー時刻が既に過ぎています:', {
+        todo: todo.title,
+        reminderTime: reminderTime.toLocaleString(),
+        now: now.toLocaleString(),
+        pastBy: Math.abs(timeUntilReminder / 1000 / 60).toFixed(1) + '分'
+      });
       return null;
     }
-
-    const timeUntilReminder = reminderTime.getTime() - now.getTime();
     
-    console.log(`リマインダーを${Math.round(timeUntilReminder / 1000 / 60)}分後にスケジュールしました:`, todo.title);
+    console.log(`⏰ リマインダーをスケジュールしました:`, {
+      todo: todo.title,
+      reminderTime: reminderTime.toLocaleString(),
+      minutesUntil: Math.round(timeUntilReminder / 1000 / 60)
+    });
 
     const timeoutId = window.setTimeout(() => {
-      console.log('リマインダー通知を表示:', todo.title);
-      showNotification(`リマインダー: ${todo.title}`, {
+      console.log('🔔 リマインダー通知を表示:', todo.title);
+      showNotification(`📋 リマインダー: ${todo.title}`, {
         body: todo.description || '期限が近づいています',
         tag: `reminder-${todo.id}`,
         icon: '/vite.svg',
@@ -175,7 +190,7 @@ export function useNotifications() {
       setScheduledReminders(prev => 
         prev.filter(r => r.todoId !== todoId)
       );
-      console.log('リマインダーをキャンセルしました:', todoId);
+      console.log('❌ リマインダーをキャンセルしました:', todoId);
     }
   }, [scheduledReminders]);
 
@@ -185,7 +200,7 @@ export function useNotifications() {
         clearTimeout(reminder.timeoutId);
       });
       setScheduledReminders([]);
-      console.log(`${scheduledReminders.length}件のリマインダーをキャンセルしました`);
+      console.log(`❌ ${scheduledReminders.length}件のリマインダーをキャンセルしました`);
     }
   }, [scheduledReminders]);
 
@@ -198,16 +213,18 @@ export function useNotifications() {
     
     if (state.permission !== 'granted') {
       console.warn('通知許可が取得されていないため、テスト通知を表示できません');
+      alert('通知許可が必要です。ブラウザの設定で通知を許可してください。');
       return;
     }
     
-    console.log('テスト通知を表示:', todo.title);
+    console.log('🧪 テスト通知を表示:', todo.title);
     // テスト通知は間隔制限を無視
     try {
-      const notification = new Notification(`テスト通知: ${todo.title}`, {
+      const notification = new Notification(`🧪 テスト通知: ${todo.title}`, {
         body: todo.description || 'これはテスト通知です',
         tag: `test-${todo.id}`,
         icon: '/vite.svg',
+        requireInteraction: false,
       });
 
       notification.onclick = () => {
