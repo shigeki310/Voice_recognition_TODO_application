@@ -74,20 +74,7 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       initializationComplete.current = true;
     } else if (permission === 'denied') {
       console.warn('❌ 通知許可が拒否されています');
-      // 拒否されている場合の案内
-      if (!permissionRequested.current) {
-        permissionRequested.current = true;
-        setTimeout(() => {
-          alert(
-            '⚠️ 通知が無効になっています\n\n' +
-            'リマインダー機能を使用するには:\n' +
-            '1. ブラウザのアドレスバー左側のアイコンをクリック\n' +
-            '2. 「通知」を「許可」に変更\n' +
-            '3. ページを再読み込み\n\n' +
-            'または、ブラウザの設定から通知を許可してください。'
-          );
-        }, 2000);
-      }
+      // 拒否されている場合の案内を削除
     }
   }, [permission, requestPermission, supported]);
 
