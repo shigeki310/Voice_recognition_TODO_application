@@ -197,7 +197,7 @@ export function TodoForm({
             <div>
               <label htmlFor="dueDate" className="block text-sm font-medium text-slate-700 mb-2">
                 <CalendarIcon className="w-4 h-4 inline mr-1" />
-                期限日
+                タスク期限日
               </label>
               <input
                 type="date"
