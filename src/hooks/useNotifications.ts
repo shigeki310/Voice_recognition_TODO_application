@@ -4,126 +4,349 @@ import { Todo } from '../types/todo';
 interface NotificationState {
   permission: NotificationPermission;
   supported: boolean;
+  debugInfo: {
+    lastError?: string;
+    lastNotificationTime?: string;
+    permissionRequestCount: number;
+    notificationAttempts: number;
+    successfulNotifications: number;
+  };
 }
 
 interface ScheduledReminder {
   todoId: string;
   timeoutId: number;
+  scheduledTime: Date;
+  reminderTime: Date;
 }
 
 export function useNotifications() {
   const [state, setState] = useState<NotificationState>({
     permission: 'default',
-    supported: false
+    supported: false,
+    debugInfo: {
+      permissionRequestCount: 0,
+      notificationAttempts: 0,
+      successfulNotifications: 0
+    }
   });
 
   const [scheduledReminders, setScheduledReminders] = useState<ScheduledReminder[]>([]);
   const lastNotificationTime = useRef<Record<string, number>>({});
+  const initializationRef = useRef(false);
 
-  // 通知間隔を5分（300000ミリ秒）に設定
-  const NOTIFICATION_INTERVAL = 5 * 60 * 1000; // 5分
+  // 通知間隔を1分（60000ミリ秒）に短縮（テスト用）
+  const NOTIFICATION_INTERVAL = 1 * 60 * 1000; // 1分
 
+  // 詳細なデバッグログ関数
+  const debugLog = useCallback((message: string, data?: any) => {
+    const timestamp = new Date().toLocaleTimeString();
+    console.log(`🔔 [${timestamp}] ${message}`, data || '');
+  }, []);
+
+  // 初期化処理
   useEffect(() => {
-    if ('Notification' in window) {
-      setState({
-        permission: Notification.permission,
-        supported: true
-      });
-      console.log('通知機能の初期化:', {
-        permission: Notification.permission,
-        supported: true
-      });
+    if (initializationRef.current) return;
+    initializationRef.current = true;
+
+    debugLog('通知システムを初期化中...');
+
+    // ブラウザサポートチェック
+    const supported = 'Notification' in window;
+    const permission = supported ? Notification.permission : 'denied';
+
+    debugLog('ブラウザ環境チェック', {
+      supported,
+      permission,
+      userAgent: navigator.userAgent,
+      protocol: window.location.protocol,
+      isSecureContext: window.isSecureContext
+    });
+
+    setState(prev => ({
+      ...prev,
+      permission,
+      supported,
+      debugInfo: {
+        ...prev.debugInfo,
+        lastError: supported ? undefined : 'ブラウザが通知をサポートしていません'
+      }
+    }));
+
+    if (!supported) {
+      debugLog('❌ このブラウザは通知機能をサポートしていません');
+      return;
+    }
+
+    if (permission === 'granted') {
+      debugLog('✅ 通知許可は既に取得済みです');
+      // テスト通知を送信
+      setTimeout(() => {
+        testBrowserNotification();
+      }, 1000);
     } else {
-      console.warn('このブラウザは通知機能をサポートしていません');
+      debugLog('⚠️ 通知許可が必要です', { currentPermission: permission });
     }
   }, []);
 
+  // ブラウザの通知機能をテスト
+  const testBrowserNotification = useCallback(() => {
+    debugLog('ブラウザ通知機能をテスト中...');
+    
+    try {
+      const testNotification = new Notification('Voice TODO App', {
+        body: '通知システムが正常に動作しています',
+        icon: '/vite.svg',
+        tag: 'system-test',
+        requireInteraction: false,
+        silent: false
+      });
+
+      debugLog('✅ テスト通知を作成しました');
+
+      testNotification.onshow = () => {
+        debugLog('✅ テスト通知が表示されました');
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            successfulNotifications: prev.debugInfo.successfulNotifications + 1,
+            lastNotificationTime: new Date().toLocaleString()
+          }
+        }));
+      };
+
+      testNotification.onerror = (error) => {
+        debugLog('❌ テスト通知でエラーが発生しました', error);
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            lastError: 'テスト通知の表示に失敗しました'
+          }
+        }));
+      };
+
+      testNotification.onclick = () => {
+        debugLog('テスト通知がクリックされました');
+        testNotification.close();
+      };
+
+      // 5秒後に自動で閉じる
+      setTimeout(() => {
+        testNotification.close();
+      }, 5000);
+
+    } catch (error) {
+      debugLog('❌ テスト通知の作成に失敗しました', error);
+      setState(prev => ({
+        ...prev,
+        debugInfo: {
+          ...prev.debugInfo,
+          lastError: `テスト通知エラー: ${error}`
+        }
+      }));
+    }
+  }, [debugLog]);
+
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!state.supported) {
-      console.warn('通知機能がサポートされていません');
+      debugLog('❌ 通知機能がサポートされていません');
       return false;
     }
 
+    setState(prev => ({
+      ...prev,
+      debugInfo: {
+        ...prev.debugInfo,
+        permissionRequestCount: prev.debugInfo.permissionRequestCount + 1
+      }
+    }));
+
     if (state.permission === 'granted') {
-      console.log('通知許可は既に取得済みです');
+      debugLog('✅ 通知許可は既に取得済みです');
       return true;
     }
 
     try {
-      console.log('通知許可を要求中...');
+      debugLog('🔔 通知許可を要求中...', {
+        currentPermission: state.permission,
+        requestCount: state.debugInfo.permissionRequestCount + 1
+      });
+
       const permission = await Notification.requestPermission();
-      setState(prev => ({ ...prev, permission }));
+      
+      debugLog('通知許可の結果', {
+        newPermission: permission,
+        previousPermission: state.permission
+      });
+
+      setState(prev => ({ 
+        ...prev, 
+        permission,
+        debugInfo: {
+          ...prev.debugInfo,
+          lastError: permission === 'granted' ? undefined : `通知許可が拒否されました: ${permission}`
+        }
+      }));
       
       if (permission === 'granted') {
-        console.log('✅ 通知許可が取得されました');
+        debugLog('✅ 通知許可が取得されました - テスト通知を送信します');
+        setTimeout(() => {
+          testBrowserNotification();
+        }, 500);
         return true;
       } else {
-        console.warn('❌ 通知許可が拒否されました:', permission);
+        debugLog('❌ 通知許可が拒否されました', permission);
         return false;
       }
     } catch (error) {
-      console.error('通知許可の取得に失敗しました:', error);
+      debugLog('❌ 通知許可の取得に失敗しました', error);
+      setState(prev => ({
+        ...prev,
+        debugInfo: {
+          ...prev.debugInfo,
+          lastError: `許可要求エラー: ${error}`
+        }
+      }));
       return false;
     }
-  }, [state.supported, state.permission]);
+  }, [state.supported, state.permission, state.debugInfo.permissionRequestCount, debugLog, testBrowserNotification]);
 
   const showNotification = useCallback((title: string, options?: NotificationOptions, todoId?: string) => {
+    setState(prev => ({
+      ...prev,
+      debugInfo: {
+        ...prev.debugInfo,
+        notificationAttempts: prev.debugInfo.notificationAttempts + 1
+      }
+    }));
+
+    debugLog('通知表示を試行中', {
+      title,
+      todoId,
+      supported: state.supported,
+      permission: state.permission,
+      attemptNumber: state.debugInfo.notificationAttempts + 1
+    });
+
     if (!state.supported) {
-      console.warn('通知機能がサポートされていません');
+      const error = '通知機能がサポートされていません';
+      debugLog('❌ ' + error);
+      setState(prev => ({
+        ...prev,
+        debugInfo: { ...prev.debugInfo, lastError: error }
+      }));
       return null;
     }
 
     if (state.permission !== 'granted') {
-      console.warn('通知許可が取得されていません。現在の状態:', state.permission);
+      const error = `通知許可が取得されていません。現在の状態: ${state.permission}`;
+      debugLog('❌ ' + error);
+      setState(prev => ({
+        ...prev,
+        debugInfo: { ...prev.debugInfo, lastError: error }
+      }));
       return null;
     }
 
-    // 同じTODOの通知間隔チェック（5分以内の重複通知を防ぐ）
+    // 同じTODOの通知間隔チェック
     const now = Date.now();
     if (todoId && lastNotificationTime.current[todoId]) {
       const timeSinceLastNotification = now - lastNotificationTime.current[todoId];
       if (timeSinceLastNotification < NOTIFICATION_INTERVAL) {
-        console.log(`通知間隔が短すぎるため、通知をスキップしました（前回から${Math.round(timeSinceLastNotification / 1000 / 60)}分経過）`);
+        const message = `通知間隔が短すぎるため、通知をスキップしました（前回から${Math.round(timeSinceLastNotification / 1000 / 60)}分経過）`;
+        debugLog('⏭️ ' + message);
         return null;
       }
     }
 
     try {
-      const notification = new Notification(title, {
+      const notificationOptions = {
         icon: '/vite.svg',
         badge: '/vite.svg',
-        requireInteraction: true, // ユーザーが操作するまで表示し続ける
+        requireInteraction: true,
         silent: false,
+        timestamp: Date.now(),
         ...options
+      };
+
+      debugLog('通知オブジェクトを作成中', {
+        title,
+        options: notificationOptions
       });
 
-      console.log('🔔 通知を表示しました:', title);
-      if (todoId) {
-        lastNotificationTime.current[todoId] = now;
-      }
+      const notification = new Notification(title, notificationOptions);
 
-      // 通知クリック時の処理
+      debugLog('✅ 通知オブジェクトが作成されました');
+
+      // 通知イベントハンドラー
+      notification.onshow = () => {
+        debugLog('🎉 通知が表示されました!', title);
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            successfulNotifications: prev.debugInfo.successfulNotifications + 1,
+            lastNotificationTime: new Date().toLocaleString(),
+            lastError: undefined
+          }
+        }));
+        
+        if (todoId) {
+          lastNotificationTime.current[todoId] = now;
+        }
+      };
+
+      notification.onerror = (error) => {
+        debugLog('❌ 通知表示エラー', error);
+        setState(prev => ({
+          ...prev,
+          debugInfo: {
+            ...prev.debugInfo,
+            lastError: `通知表示エラー: ${error}`
+          }
+        }));
+      };
+
       notification.onclick = () => {
-        console.log('通知がクリックされました');
+        debugLog('通知がクリックされました', title);
         window.focus();
         notification.close();
       };
 
-      // 自動で閉じる（15秒後）
+      notification.onclose = () => {
+        debugLog('通知が閉じられました', title);
+      };
+
+      // 自動で閉じる（20秒後）
       setTimeout(() => {
         notification.close();
-      }, 15000);
+        debugLog('通知を自動で閉じました', title);
+      }, 20000);
 
       return notification;
     } catch (error) {
-      console.error('通知の表示に失敗しました:', error);
+      const errorMessage = `通知の表示に失敗しました: ${error}`;
+      debugLog('❌ ' + errorMessage, error);
+      setState(prev => ({
+        ...prev,
+        debugInfo: {
+          ...prev.debugInfo,
+          lastError: errorMessage
+        }
+      }));
       return null;
     }
-  }, [state.permission, state.supported, NOTIFICATION_INTERVAL]);
+  }, [state.permission, state.supported, state.debugInfo.notificationAttempts, NOTIFICATION_INTERVAL, debugLog]);
 
   const scheduleReminder = useCallback((todo: Todo) => {
     if (!todo.reminderEnabled || !todo.reminderTime) {
-      console.log('リマインダーが無効または時間が設定されていません:', todo.title);
+      debugLog('リマインダーが無効または時間が設定されていません', {
+        title: todo.title,
+        reminderEnabled: todo.reminderEnabled,
+        reminderTime: todo.reminderTime
+      });
       return null;
     }
 
@@ -143,24 +366,40 @@ export function useNotifications() {
 
     const timeUntilReminder = reminderTime.getTime() - now.getTime();
 
+    debugLog('リマインダー時刻を計算', {
+      todo: todo.title,
+      dueDate: todo.dueDate.toLocaleString(),
+      dueTime: todo.dueTime,
+      reminderMinutes: todo.reminderTime,
+      calculatedReminderTime: reminderTime.toLocaleString(),
+      timeUntilReminderMs: timeUntilReminder,
+      timeUntilReminderMinutes: Math.round(timeUntilReminder / 1000 / 60)
+    });
+
     if (timeUntilReminder <= 0) {
-      console.log('⚠️ リマインダー時刻が既に過ぎています:', {
+      debugLog('⚠️ リマインダー時刻が既に過ぎています', {
         todo: todo.title,
         reminderTime: reminderTime.toLocaleString(),
         now: now.toLocaleString(),
-        pastBy: Math.abs(timeUntilReminder / 1000 / 60).toFixed(1) + '分'
+        pastByMinutes: Math.abs(timeUntilReminder / 1000 / 60).toFixed(1)
       });
       return null;
     }
     
-    console.log(`⏰ リマインダーをスケジュールしました:`, {
+    debugLog('⏰ リマインダーをスケジュールします', {
       todo: todo.title,
       reminderTime: reminderTime.toLocaleString(),
-      minutesUntil: Math.round(timeUntilReminder / 1000 / 60)
+      minutesUntil: Math.round(timeUntilReminder / 1000 / 60),
+      hoursUntil: Math.round(timeUntilReminder / 1000 / 60 / 60)
     });
 
     const timeoutId = window.setTimeout(() => {
-      console.log('🔔 リマインダー通知を表示:', todo.title);
+      debugLog('🔔 リマインダー通知を表示します', {
+        todo: todo.title,
+        scheduledTime: reminderTime.toLocaleString(),
+        actualTime: new Date().toLocaleString()
+      });
+      
       showNotification(`📋 リマインダー: ${todo.title}`, {
         body: todo.description || '期限が近づいています',
         tag: `reminder-${todo.id}`,
@@ -175,13 +414,26 @@ export function useNotifications() {
     }, timeUntilReminder);
 
     // スケジュールリストに追加
+    const newReminder: ScheduledReminder = {
+      todoId: todo.id,
+      timeoutId,
+      scheduledTime: now,
+      reminderTime
+    };
+
     setScheduledReminders(prev => [
       ...prev.filter(reminder => reminder.todoId !== todo.id),
-      { todoId: todo.id, timeoutId }
+      newReminder
     ]);
 
+    debugLog('✅ リマインダーがスケジュールされました', {
+      todoId: todo.id,
+      timeoutId,
+      reminderTime: reminderTime.toLocaleString()
+    });
+
     return timeoutId;
-  }, [showNotification]);
+  }, [showNotification, debugLog]);
 
   const cancelReminder = useCallback((todoId: string) => {
     const reminder = scheduledReminders.find(r => r.todoId === todoId);
@@ -190,9 +442,12 @@ export function useNotifications() {
       setScheduledReminders(prev => 
         prev.filter(r => r.todoId !== todoId)
       );
-      console.log('❌ リマインダーをキャンセルしました:', todoId);
+      debugLog('❌ リマインダーをキャンセルしました', {
+        todoId,
+        timeoutId: reminder.timeoutId
+      });
     }
-  }, [scheduledReminders]);
+  }, [scheduledReminders, debugLog]);
 
   const cancelAllReminders = useCallback(() => {
     if (scheduledReminders.length > 0) {
@@ -200,24 +455,25 @@ export function useNotifications() {
         clearTimeout(reminder.timeoutId);
       });
       setScheduledReminders([]);
-      console.log(`❌ ${scheduledReminders.length}件のリマインダーをキャンセルしました`);
+      debugLog(`❌ ${scheduledReminders.length}件のリマインダーをキャンセルしました`);
     }
-  }, [scheduledReminders]);
+  }, [scheduledReminders, debugLog]);
 
-  // テスト用の即座通知機能（開発モードでのみ有効）
+  // テスト用の即座通知機能
   const testNotification = useCallback((todo: Todo) => {
-    if (process.env.NODE_ENV !== 'development') {
-      console.log('テスト通知は開発モードでのみ利用可能です');
-      return;
-    }
+    debugLog('🧪 テスト通知を実行します', {
+      todo: todo.title,
+      permission: state.permission,
+      supported: state.supported
+    });
     
     if (state.permission !== 'granted') {
-      console.warn('通知許可が取得されていないため、テスト通知を表示できません');
-      alert('通知許可が必要です。ブラウザの設定で通知を許可してください。');
+      const message = '通知許可が取得されていないため、テスト通知を表示できません';
+      debugLog('❌ ' + message);
+      alert(`${message}\n\n現在の許可状態: ${state.permission}\n\nブラウザの設定で通知を許可してください。`);
       return;
     }
     
-    console.log('🧪 テスト通知を表示:', todo.title);
     // テスト通知は間隔制限を無視
     try {
       const notification = new Notification(`🧪 テスト通知: ${todo.title}`, {
@@ -225,7 +481,16 @@ export function useNotifications() {
         tag: `test-${todo.id}`,
         icon: '/vite.svg',
         requireInteraction: false,
+        timestamp: Date.now()
       });
+
+      notification.onshow = () => {
+        debugLog('✅ テスト通知が表示されました');
+      };
+
+      notification.onerror = (error) => {
+        debugLog('❌ テスト通知でエラーが発生しました', error);
+      };
 
       notification.onclick = () => {
         window.focus();
@@ -236,9 +501,30 @@ export function useNotifications() {
         notification.close();
       }, 5000);
     } catch (error) {
-      console.error('テスト通知の表示に失敗しました:', error);
+      debugLog('❌ テスト通知の表示に失敗しました', error);
+      alert(`テスト通知の表示に失敗しました: ${error}`);
     }
-  }, [state.permission]);
+  }, [state.permission, state.supported, debugLog]);
+
+  // デバッグ情報を表示する関数
+  const showDebugInfo = useCallback(() => {
+    const info = {
+      通知サポート: state.supported ? '✅ サポート済み' : '❌ 未サポート',
+      通知許可: state.permission,
+      許可要求回数: state.debugInfo.permissionRequestCount,
+      通知試行回数: state.debugInfo.notificationAttempts,
+      成功した通知: state.debugInfo.successfulNotifications,
+      最後の通知時刻: state.debugInfo.lastNotificationTime || '未実行',
+      最後のエラー: state.debugInfo.lastError || 'なし',
+      スケジュール済みリマインダー: scheduledReminders.length,
+      ブラウザ: navigator.userAgent,
+      プロトコル: window.location.protocol,
+      セキュアコンテキスト: window.isSecureContext ? '✅' : '❌'
+    };
+
+    console.table(info);
+    alert(`通知システム デバッグ情報:\n\n${Object.entries(info).map(([key, value]) => `${key}: ${value}`).join('\n')}`);
+  }, [state, scheduledReminders.length]);
 
   return {
     ...state,
@@ -248,7 +534,9 @@ export function useNotifications() {
     cancelReminder,
     cancelAllReminders,
     testNotification,
+    showDebugInfo,
     scheduledCount: scheduledReminders.length,
+    scheduledReminders,
     notificationInterval: NOTIFICATION_INTERVAL
   };
 }

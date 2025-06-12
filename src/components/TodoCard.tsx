@@ -12,7 +12,8 @@ import {
   InformationCircleIcon,
   CheckIcon,
   ClockIcon,
-  BellIcon
+  BellIcon,
+  BugAntIcon
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
 import { useNotifications } from '../hooks/useNotifications';
@@ -80,7 +81,7 @@ const truncateTitle = (title: string, maxLength: number = 12): string => {
 };
 
 export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: TodoCardProps) {
-  const { testNotification } = useNotifications();
+  const { testNotification, showDebugInfo, permission } = useNotifications();
   const priority = priorityConfig[todo.priority];
   const PriorityIcon = priority.icon;
   
@@ -109,7 +110,14 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
 
   const handleTestNotification = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log('🧪 テスト通知ボタンがクリックされました:', todo.title);
     testNotification(todo);
+  };
+
+  const handleDebugInfo = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log('🔧 デバッグ情報ボタンがクリックされました');
+    showDebugInfo();
   };
 
   // コンパクトモード（週・月表示）
@@ -191,14 +199,25 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
 
           {/* ホバー時のアクションボタン */}
           <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-            {process.env.NODE_ENV === 'development' && todo.reminderEnabled && (
-              <button
-                onClick={handleTestNotification}
-                className="p-0.5 text-blue-400 hover:text-blue-600 rounded"
-                title="テスト通知"
-              >
-                <BellIcon className="w-2.5 h-2.5" />
-              </button>
+            {process.env.NODE_ENV === 'development' && (
+              <>
+                <button
+                  onClick={handleDebugInfo}
+                  className="p-0.5 text-purple-400 hover:text-purple-600 rounded"
+                  title="デバッグ情報"
+                >
+                  <BugAntIcon className="w-2.5 h-2.5" />
+                </button>
+                {todo.reminderEnabled && (
+                  <button
+                    onClick={handleTestNotification}
+                    className="p-0.5 text-blue-400 hover:text-blue-600 rounded"
+                    title="テスト通知"
+                  >
+                    <BellIcon className="w-2.5 h-2.5" />
+                  </button>
+                )}
+              </>
             )}
             <button
               onClick={(e) => {
@@ -310,18 +329,37 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               </div>
             </div>
           </div>
+
+          {/* 開発モード用の通知状態表示 */}
+          {process.env.NODE_ENV === 'development' && todo.reminderEnabled && (
+            <div className="mt-2 text-xs text-slate-500 bg-slate-50 rounded px-2 py-1">
+              通知許可: {permission === 'granted' ? '✅' : permission === 'denied' ? '❌' : '⚠️'}
+              {permission !== 'granted' && ' (通知が表示されません)'}
+            </div>
+          )}
         </div>
 
         {/* アクションボタン */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-          {process.env.NODE_ENV === 'development' && todo.reminderEnabled && (
-            <button
-              onClick={handleTestNotification}
-              className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
-              title="テスト通知"
-            >
-              <BellIcon className="w-4 h-4" />
-            </button>
+          {process.env.NODE_ENV === 'development' && (
+            <>
+              <button
+                onClick={handleDebugInfo}
+                className="p-1.5 text-purple-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors duration-200"
+                title="デバッグ情報を表示"
+              >
+                <BugAntIcon className="w-4 h-4" />
+              </button>
+              {todo.reminderEnabled && (
+                <button
+                  onClick={handleTestNotification}
+                  className="p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-200"
+                  title="テスト通知を送信"
+                >
+                  <BellIcon className="w-4 h-4" />
+                </button>
+              )}
+            </>
           )}
           <button
             onClick={() => onEdit(todo)}
