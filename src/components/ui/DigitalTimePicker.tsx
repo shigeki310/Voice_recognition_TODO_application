@@ -317,7 +317,7 @@ export function DigitalTimePicker({ value, onChange, onClose, className = '' }: 
               className="w-full px-6 py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-semibold transition-all duration-200"
             >
               完了
-            </button>
+            </motion.button>
           )}
         </div>
       </div>
