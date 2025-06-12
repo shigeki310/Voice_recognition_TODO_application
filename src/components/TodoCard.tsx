@@ -149,9 +149,10 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               {truncateTitle(todo.title, compact ? 8 : 12)}
             </h3>
             
-            {/* 統合された時間情報 */}
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-0.5 sm:gap-1">
+            {/* 横方向に統合された時間情報 */}
+            <div className="flex flex-wrap items-center gap-1 text-xs">
+              {/* 日付 */}
+              <div className="flex items-center gap-0.5">
                 <CalendarIcon className="w-2 h-2 text-slate-400" />
                 <span className={clsx(
                   'text-xs',
@@ -159,27 +160,29 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
                 )}>
                   {format(todo.dueDate, 'M/d', { locale: ja })}
                 </span>
-                {timeDisplay && (
-                  <>
-                    <ClockIcon className="w-2 h-2 text-slate-400 ml-0.5 sm:ml-1" />
-                    <span className="text-slate-600 text-xs">{timeDisplay}</span>
-                  </>
-                )}
               </div>
               
-              {/* リマインダーと優先度を横並び */}
-              <div className="flex items-center gap-0.5 sm:gap-1">
-                {reminderDisplay && (
-                  <div className="flex items-center gap-0.5 px-1 py-0.5 rounded text-xs bg-blue-50">
-                    <BellIcon className="w-2 h-2 text-blue-500" />
-                    <span className="text-blue-600 text-xs hidden sm:inline">{reminderDisplay}</span>
-                  </div>
-                )}
-                <div className={clsx(
-                  'w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full',
-                  priority.accent
-                )} title={`優先度: ${priority.label}`} />
-              </div>
+              {/* 時刻 */}
+              {timeDisplay && (
+                <div className="flex items-center gap-0.5">
+                  <ClockIcon className="w-2 h-2 text-slate-400" />
+                  <span className="text-slate-600 text-xs">{timeDisplay}</span>
+                </div>
+              )}
+              
+              {/* リマインダー */}
+              {reminderDisplay && (
+                <div className="flex items-center gap-0.5 px-1 py-0.5 rounded bg-blue-50">
+                  <BellIcon className="w-2 h-2 text-blue-500" />
+                  <span className="text-blue-600 text-xs">{reminderDisplay}</span>
+                </div>
+              )}
+              
+              {/* 優先度 */}
+              <div className={clsx(
+                'w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ml-auto',
+                priority.accent
+              )} title={`優先度: ${priority.label}`} />
             </div>
           </div>
 
