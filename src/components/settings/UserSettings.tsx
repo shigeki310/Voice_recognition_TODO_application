@@ -7,7 +7,7 @@ import {
   BellIcon,
   PaintBrushIcon,
   LanguageIcon,
-  ShieldCheckIcon,
+  DocumentArrowDownIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../hooks/useAuth';
@@ -60,12 +60,9 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     },
     language: {
       language: 'ja',
-      dateFormat: 'jp',
       timeFormat: '24h',
     },
     privacy: {
-      dataSharing: false,
-      analytics: true,
       exportFormat: 'json',
       exportPeriod: 'all',
       downloadFormat: 'zip',
@@ -138,6 +135,9 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       theme: { ...prev.theme, ...newSettings }
     }));
     setHasChanges(true);
+    
+    // テーマ変更を即座に適用
+    applyThemeSettings({ ...settings.theme, ...newSettings });
   };
 
   const handleLanguageSettingsChange = (newSettings: Partial<UserSettingsType['language']>) => {
@@ -161,6 +161,51 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     setHasChanges(true);
   };
 
+  // テーマ設定を適用する関数
+  const applyThemeSettings = (themeSettings: UserSettingsType['theme']) => {
+    const root = document.documentElement;
+    
+    // フォントサイズの適用
+    switch (themeSettings.fontSize) {
+      case 'small':
+        root.style.fontSize = '14px';
+        break;
+      case 'large':
+        root.style.fontSize = '18px';
+        break;
+      default:
+        root.style.fontSize = '16px';
+        break;
+    }
+    
+    // カラーパレットの適用
+    const colorPalettes = {
+      blue: { primary: '#0284c7', secondary: '#0ea5e9' },
+      purple: { primary: '#7c3aed', secondary: '#8b5cf6' },
+      green: { primary: '#059669', secondary: '#10b981' },
+      orange: { primary: '#ea580c', secondary: '#f97316' },
+      pink: { primary: '#db2777', secondary: '#ec4899' },
+    };
+    
+    const palette = colorPalettes[themeSettings.colorPalette];
+    root.style.setProperty('--color-primary-600', palette.primary);
+    root.style.setProperty('--color-primary-500', palette.secondary);
+    
+    // ダークモードの適用
+    if (themeSettings.mode === 'dark') {
+      root.classList.add('dark');
+    } else if (themeSettings.mode === 'light') {
+      root.classList.remove('dark');
+    } else {
+      // システム設定に従う
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        root.classList.add('dark');
+      } else {
+        root.classList.remove('dark');
+      }
+    }
+  };
+
   // 設定をローカルストレージから読み込み
   useEffect(() => {
     const savedSettings = localStorage.getItem('voice_todo_settings');
@@ -170,6 +215,8 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings(prev => ({ ...prev, ...parsedSettings }));
+        // 読み込み時にテーマを適用
+        applyThemeSettings(parsedSettings.theme || settings.theme);
       } catch (error) {
         console.error('設定の読み込みに失敗しました:', error);
       }
@@ -191,7 +238,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     { id: 'notifications', label: '通知設定', icon: BellIcon },
     { id: 'theme', label: 'テーマ', icon: PaintBrushIcon },
     { id: 'language', label: '言語・地域', icon: LanguageIcon },
-    { id: 'privacy', label: 'プライバシー', icon: ShieldCheckIcon },
+    { id: 'privacy', label: 'データエクスポート', icon: DocumentArrowDownIcon },
   ];
 
   if (!isOpen) return null;

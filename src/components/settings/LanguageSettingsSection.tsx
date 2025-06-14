@@ -2,7 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   LanguageIcon,
-  CalendarIcon,
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { LanguageSettings } from '../../types/settings';
@@ -18,10 +17,6 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
     onSettingsChange({ language });
   };
 
-  const handleDateFormatChange = (dateFormat: LanguageSettings['dateFormat']) => {
-    onSettingsChange({ dateFormat });
-  };
-
   const handleTimeFormatChange = (timeFormat: LanguageSettings['timeFormat']) => {
     onSettingsChange({ timeFormat });
   };
@@ -29,15 +24,6 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
   const languageOptions = [
     { value: 'ja', label: '日本語', nativeName: '日本語', flag: '🇯🇵' },
     { value: 'en', label: 'English', nativeName: 'English', flag: '🇺🇸' },
-    { value: 'ko', label: '한국어', nativeName: '한국어', flag: '🇰🇷' },
-    { value: 'zh', label: '中文', nativeName: '中文', flag: '🇨🇳' },
-  ] as const;
-
-  const dateFormatOptions = [
-    { value: 'jp', label: '日本式', example: '2024年12月25日', description: '年月日の順序' },
-    { value: 'us', label: 'アメリカ式', example: '12/25/2024', description: '月/日/年の順序' },
-    { value: 'eu', label: 'ヨーロッパ式', example: '25/12/2024', description: '日/月/年の順序' },
-    { value: 'iso', label: 'ISO形式', example: '2024-12-25', description: '国際標準形式' },
   ] as const;
 
   const timeFormatOptions = [
@@ -85,44 +71,6 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
                   {isSelected && (
                     <div className="w-2 h-2 bg-primary-600 rounded-full" />
                   )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 日付形式設定 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <CalendarIcon className="w-5 h-5 text-slate-400" />
-            <h3 className="font-medium text-slate-900">日付形式</h3>
-          </div>
-          
-          <div className="space-y-3">
-            {dateFormatOptions.map(option => {
-              const isSelected = settings.dateFormat === option.value;
-              
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => handleDateFormatChange(option.value)}
-                  className={clsx(
-                    'w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200',
-                    isSelected
-                      ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50'
-                  )}
-                >
-                  <div className="text-left">
-                    <div className="font-medium">{option.label}</div>
-                    <div className="text-sm opacity-75">{option.description}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-mono text-sm">{option.example}</div>
-                    {isSelected && (
-                      <div className="w-2 h-2 bg-primary-600 rounded-full mt-1 ml-auto" />
-                    )}
-                  </div>
                 </button>
               );
             })}

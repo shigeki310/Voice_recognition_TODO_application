@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  ShieldCheckIcon,
   DocumentArrowDownIcon,
   FolderArrowDownIcon,
   CalendarIcon,
@@ -67,9 +66,25 @@ export function PrivacySettingsSection({ settings, onSettingsChange, user }: Pri
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       
-      alert('データのエクスポートが完了しました');
+      // 成功メッセージの表示
+      const successMessage = document.createElement('div');
+      successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      successMessage.textContent = 'データのエクスポートが完了しました';
+      document.body.appendChild(successMessage);
+      
+      setTimeout(() => {
+        document.body.removeChild(successMessage);
+      }, 3000);
     } catch (error) {
-      alert('データのエクスポートに失敗しました');
+      // エラーメッセージの表示
+      const errorMessage = document.createElement('div');
+      errorMessage.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+      errorMessage.textContent = 'データのエクスポートに失敗しました';
+      document.body.appendChild(errorMessage);
+      
+      setTimeout(() => {
+        document.body.removeChild(errorMessage);
+      }, 3000);
     } finally {
       setLoading(false);
     }
@@ -100,65 +115,13 @@ export function PrivacySettingsSection({ settings, onSettingsChange, user }: Pri
       className="space-y-6"
     >
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">プライバシー・データ設定</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">データエクスポート</h2>
         
-        {/* プライバシー設定 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ShieldCheckIcon className="w-5 h-5 text-slate-400" />
-            <h3 className="font-medium text-slate-900">プライバシー設定</h3>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-slate-900">データ共有</h4>
-                <p className="text-sm text-slate-500">サービス改善のためのデータ共有を許可</p>
-              </div>
-              <button
-                onClick={() => handlePrivacyChange('dataSharing', !settings.dataSharing)}
-                className={clsx(
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                  settings.dataSharing ? 'bg-primary-600' : 'bg-slate-200'
-                )}
-              >
-                <span
-                  className={clsx(
-                    'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200',
-                    settings.dataSharing ? 'translate-x-6' : 'translate-x-1'
-                  )}
-                />
-              </button>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-slate-900">使用状況の分析</h4>
-                <p className="text-sm text-slate-500">アプリの使用状況を分析してサービスを改善</p>
-              </div>
-              <button
-                onClick={() => handlePrivacyChange('analytics', !settings.analytics)}
-                className={clsx(
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                  settings.analytics ? 'bg-primary-600' : 'bg-slate-200'
-                )}
-              >
-                <span
-                  className={clsx(
-                    'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200',
-                    settings.analytics ? 'translate-x-6' : 'translate-x-1'
-                  )}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* データエクスポート設定 */}
         <div className="bg-white border border-slate-200 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <DocumentArrowDownIcon className="w-5 h-5 text-slate-400" />
-            <h3 className="font-medium text-slate-900">データエクスポート設定</h3>
+            <h3 className="font-medium text-slate-900">エクスポート設定</h3>
           </div>
           
           <div className="space-y-6">

@@ -30,12 +30,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   },
   language: {
     language: 'ja',
-    dateFormat: 'jp',
     timeFormat: '24h',
   },
   privacy: {
-    dataSharing: false,
-    analytics: true,
     exportFormat: 'json',
     exportPeriod: 'all',
     downloadFormat: 'zip',

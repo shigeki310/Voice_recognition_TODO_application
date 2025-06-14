@@ -27,14 +27,11 @@ export interface ThemeSettings {
 }
 
 export interface LanguageSettings {
-  language: 'ja' | 'en' | 'ko' | 'zh';
-  dateFormat: 'jp' | 'us' | 'eu' | 'iso';
+  language: 'ja' | 'en';
   timeFormat: '12h' | '24h';
 }
 
 export interface PrivacySettings {
-  dataSharing: boolean;
-  analytics: boolean;
   exportFormat: 'csv' | 'json';
   exportPeriod: 'all' | 'last30days' | 'last90days' | 'lastyear';
   downloadFormat: 'zip' | 'individual';
