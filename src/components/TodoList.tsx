@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Todo, ViewMode } from '../types/todo';
 import { TodoCard } from './TodoCard';
-import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval, startOfDay, endOfDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, startOfMonth, endOfMonth, eachWeekOfInterval } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
