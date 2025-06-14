@@ -166,6 +166,154 @@ export const translations: Translations = {
     en: 'Language & Region'
   },
   
+  // プロフィール設定
+  'profile.title': {
+    ja: 'プロフィール情報',
+    en: 'Profile Information'
+  },
+  'profile.avatar': {
+    ja: 'アバター',
+    en: 'Avatar'
+  },
+  'profile.profileImage': {
+    ja: 'プロフィール画像',
+    en: 'Profile Image'
+  },
+  'profile.imageRequirements': {
+    ja: 'JPEGまたはPNG形式、最大2MB',
+    en: 'JPEG or PNG format, max 2MB'
+  },
+  'profile.username': {
+    ja: 'ユーザー名',
+    en: 'Username'
+  },
+  'profile.usernamePlaceholder': {
+    ja: 'ユーザー名を入力',
+    en: 'Enter username'
+  },
+  'profile.usernameRequirements': {
+    ja: '3-20文字、半角英数字とアンダースコアのみ',
+    en: '3-20 characters, alphanumeric and underscore only'
+  },
+  'profile.registrationDate': {
+    ja: '登録日',
+    en: 'Registration Date'
+  },
+  'profile.unknown': {
+    ja: '不明',
+    en: 'Unknown'
+  },
+  'profile.fileSizeError': {
+    ja: 'ファイルサイズは2MB以下にしてください',
+    en: 'File size must be 2MB or less'
+  },
+  'profile.fileTypeError': {
+    ja: 'JPEGまたはPNG形式の画像を選択してください',
+    en: 'Please select a JPEG or PNG image'
+  },
+  
+  // アカウント設定
+  'account.title': {
+    ja: 'アカウント設定',
+    en: 'Account Settings'
+  },
+  'account.changePassword': {
+    ja: 'パスワード変更',
+    en: 'Change Password'
+  },
+  'account.change': {
+    ja: '変更する',
+    en: 'Change'
+  },
+  'account.currentPassword': {
+    ja: '現在のパスワード',
+    en: 'Current Password'
+  },
+  'account.currentPasswordPlaceholder': {
+    ja: '現在のパスワードを入力',
+    en: 'Enter current password'
+  },
+  'account.newPassword': {
+    ja: '新しいパスワード',
+    en: 'New Password'
+  },
+  'account.newPasswordPlaceholder': {
+    ja: '新しいパスワードを入力',
+    en: 'Enter new password'
+  },
+  'account.confirmPassword': {
+    ja: '新しいパスワード（確認）',
+    en: 'Confirm New Password'
+  },
+  'account.confirmPasswordPlaceholder': {
+    ja: '新しいパスワードを再入力',
+    en: 'Re-enter new password'
+  },
+  'account.passwordRequirementsText': {
+    ja: '8-32文字、英大文字・小文字・数字を各1文字以上',
+    en: '8-32 characters, at least one uppercase, lowercase, and number'
+  },
+  'account.changePasswordButton': {
+    ja: 'パスワードを変更',
+    en: 'Change Password'
+  },
+  'account.changingPassword': {
+    ja: 'パスワード変更中...',
+    en: 'Changing password...'
+  },
+  'account.dangerZone': {
+    ja: '危険な操作',
+    en: 'Danger Zone'
+  },
+  'account.deleteWarning': {
+    ja: 'アカウントを削除すると、すべてのデータが完全に削除され、復元できません。',
+    en: 'Deleting your account will permanently remove all your data and cannot be undone.'
+  },
+  'account.deleteAccount': {
+    ja: 'アカウントを削除',
+    en: 'Delete Account'
+  },
+  'account.deleteConfirm': {
+    ja: '本当にアカウントを削除しますか？この操作は取り消せません。',
+    en: 'Are you sure you want to delete your account? This action cannot be undone.'
+  },
+  'account.delete': {
+    ja: '削除する',
+    en: 'Delete'
+  },
+  'account.deleting': {
+    ja: '削除中...',
+    en: 'Deleting...'
+  },
+  'account.fillAllFields': {
+    ja: 'すべてのフィールドを入力してください',
+    en: 'Please fill in all fields'
+  },
+  'account.passwordMismatch': {
+    ja: '新しいパスワードが一致しません',
+    en: 'New passwords do not match'
+  },
+  'account.passwordTooShort': {
+    ja: '新しいパスワードは8文字以上で入力してください',
+    en: 'New password must be at least 8 characters'
+  },
+  'account.passwordRequirements': {
+    ja: '新しいパスワードは半角英大文字、小文字、数字を各1文字以上含む必要があります',
+    en: 'New password must contain at least one uppercase letter, lowercase letter, and number'
+  },
+  'account.passwordChanged': {
+    ja: 'パスワードが変更されました',
+    en: 'Password changed successfully'
+  },
+  'account.passwordChangeError': {
+    ja: 'パスワードの変更に失敗しました',
+    en: 'Failed to change password'
+  },
+  'account.deleteError': {
+    ja: 'アカウントの削除に失敗しました',
+    en: 'Failed to delete account'
+  },
+  
   // テーマ設定
   'theme.title': {
     ja: 'テーマ設定',
