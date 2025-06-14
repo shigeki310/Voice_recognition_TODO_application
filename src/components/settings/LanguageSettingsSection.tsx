@@ -39,13 +39,13 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
       className="space-y-6"
     >
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">言語・地域設定</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">言語・地域設定</h2>
         
         {/* 言語設定 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4 mb-6">
+        <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <LanguageIcon className="w-5 h-5 text-slate-400" />
-            <h3 className="font-medium text-slate-900">表示言語</h3>
+            <LanguageIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <h3 className="font-medium text-slate-900 dark:text-slate-100">表示言語</h3>
           </div>
           
           <div className="space-y-3">
@@ -59,8 +59,8 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
                   className={clsx(
                     'w-full flex items-center gap-3 p-3 rounded-lg border transition-all duration-200',
                     isSelected
-                      ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600'
                   )}
                 >
                   <span className="text-2xl">{option.flag}</span>
@@ -75,13 +75,19 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
               );
             })}
           </div>
+          
+          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg">
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              <strong>注意:</strong> 言語を変更すると、アプリケーションが再読み込みされます。
+            </p>
+          </div>
         </div>
 
         {/* 時刻形式設定 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-4">
-            <ClockIcon className="w-5 h-5 text-slate-400" />
-            <h3 className="font-medium text-slate-900">時刻形式</h3>
+            <ClockIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <h3 className="font-medium text-slate-900 dark:text-slate-100">時刻形式</h3>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -95,8 +101,8 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
                   className={clsx(
                     'flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all duration-200',
                     isSelected
-                      ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600'
                   )}
                 >
                   <div className="font-mono text-lg font-bold">{option.example}</div>
@@ -107,6 +113,12 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
                 </button>
               );
             })}
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <strong>現在の設定:</strong> {timeFormatOptions.find(opt => opt.value === settings.timeFormat)?.label}
+            </p>
           </div>
         </div>
       </div>

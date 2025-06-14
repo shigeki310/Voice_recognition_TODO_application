@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { ViewMode, RepeatType } from '../types/todo';
 import { useTodos } from '../hooks/useTodos';
@@ -20,6 +20,17 @@ export function TodoApp() {
 
   const { authState } = useAuth();
   const { todos, loading, addTodo, updateTodo, deleteTodo, toggleTodo } = useTodos();
+
+  // 言語変更イベントを監視してページを再レンダリング
+  useEffect(() => {
+    const handleLanguageChange = () => {
+      // 強制的に再レンダリング
+      setViewMode(prev => prev);
+    };
+
+    window.addEventListener('languageChanged', handleLanguageChange);
+    return () => window.removeEventListener('languageChanged', handleLanguageChange);
+  }, []);
 
   // 認証状態が読み込み中の場合のみローディングを表示
   if (authState.loading) {
@@ -101,7 +112,7 @@ export function TodoApp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <Header
         viewMode={viewMode}
         onViewModeChange={setViewMode}
@@ -114,8 +125,8 @@ export function TodoApp() {
       <main className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 2xl:px-16 py-4 sm:py-6">
         {loading && todos.length === 0 ? (
           <div className="text-center py-8">
-            <div className="inline-flex items-center gap-2 text-slate-600">
-              <div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
+            <div className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400">
+              <div className="w-4 h-4 border-2 border-slate-300 dark:border-slate-600 border-t-slate-600 dark:border-t-slate-300 rounded-full animate-spin"></div>
               TODOを読み込み中...
             </div>
           </div>

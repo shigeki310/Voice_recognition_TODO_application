@@ -33,13 +33,13 @@ export function ThemeSettingsSection({ settings, onSettingsChange }: ThemeSettin
       className="space-y-6"
     >
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">テーマ設定</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">テーマ設定</h2>
         
         {/* テーマモード設定 */}
-        <div className="bg-white border border-slate-200 rounded-lg p-4">
+        <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-4">
-            <PaintBrushIcon className="w-5 h-5 text-slate-400" />
-            <h3 className="font-medium text-slate-900">表示モード</h3>
+            <PaintBrushIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+            <h3 className="font-medium text-slate-900 dark:text-slate-100">表示モード</h3>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -54,8 +54,8 @@ export function ThemeSettingsSection({ settings, onSettingsChange }: ThemeSettin
                   className={clsx(
                     'flex flex-col items-center gap-3 p-4 rounded-lg border-2 transition-all duration-200',
                     isSelected
-                      ? 'border-primary-500 bg-primary-50 text-primary-700 shadow-sm'
-                      : 'border-slate-200 hover:border-slate-300 text-slate-600 hover:bg-slate-50'
+                      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 shadow-sm'
+                      : 'border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600'
                   )}
                 >
                   <Icon className="w-8 h-8" />
@@ -66,6 +66,17 @@ export function ThemeSettingsSection({ settings, onSettingsChange }: ThemeSettin
                 </button>
               );
             })}
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <strong>現在の設定:</strong> {modeOptions.find(opt => opt.value === settings.mode)?.label}
+              {settings.mode === 'system' && (
+                <span className="block mt-1 text-xs opacity-75">
+                  システムの設定に応じて自動的に切り替わります
+                </span>
+              )}
+            </p>
           </div>
         </div>
       </div>
