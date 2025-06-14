@@ -7,6 +7,7 @@ import {
   ComputerDesktopIcon
 } from '@heroicons/react/24/outline';
 import { ThemeSettings } from '../../types/settings';
+import { t } from '../../utils/i18n';
 import clsx from 'clsx';
 
 interface ThemeSettingsSectionProps {
@@ -20,9 +21,9 @@ export function ThemeSettingsSection({ settings, onSettingsChange }: ThemeSettin
   };
 
   const modeOptions = [
-    { value: 'light', label: 'ライト', icon: SunIcon, description: '明るいテーマ' },
-    { value: 'dark', label: 'ダーク', icon: MoonIcon, description: '暗いテーマ' },
-    { value: 'system', label: 'システム', icon: ComputerDesktopIcon, description: 'システム設定に従う' },
+    { value: 'light', label: t('theme.light'), icon: SunIcon, description: t('theme.lightDesc') },
+    { value: 'dark', label: t('theme.dark'), icon: MoonIcon, description: t('theme.darkDesc') },
+    { value: 'system', label: t('theme.system'), icon: ComputerDesktopIcon, description: t('theme.systemDesc') },
   ] as const;
 
   return (
@@ -33,13 +34,13 @@ export function ThemeSettingsSection({ settings, onSettingsChange }: ThemeSettin
       className="space-y-6"
     >
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">テーマ設定</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">{t('theme.title')}</h2>
         
         {/* テーマモード設定 */}
         <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-4">
             <PaintBrushIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-            <h3 className="font-medium text-slate-900 dark:text-slate-100">表示モード</h3>
+            <h3 className="font-medium text-slate-900 dark:text-slate-100">{t('theme.displayMode')}</h3>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -70,10 +71,10 @@ export function ThemeSettingsSection({ settings, onSettingsChange }: ThemeSettin
           
           <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>現在の設定:</strong> {modeOptions.find(opt => opt.value === settings.mode)?.label}
+              <strong>{t('theme.currentSetting')}:</strong> {modeOptions.find(opt => opt.value === settings.mode)?.label}
               {settings.mode === 'system' && (
                 <span className="block mt-1 text-xs opacity-75">
-                  システムの設定に応じて自動的に切り替わります
+                  {t('theme.systemNote')}
                 </span>
               )}
             </p>

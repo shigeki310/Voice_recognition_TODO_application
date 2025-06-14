@@ -129,6 +129,22 @@ export const translations: Translations = {
     ja: '保存',
     en: 'Save'
   },
+  'settings.saving': {
+    ja: '保存中...',
+    en: 'Saving...'
+  },
+  'settings.saved': {
+    ja: '設定が保存されました',
+    en: 'Settings saved successfully'
+  },
+  'settings.saveError': {
+    ja: '設定の保存に失敗しました',
+    en: 'Failed to save settings'
+  },
+  'settings.unsavedChanges': {
+    ja: '未保存の変更があります',
+    en: 'Unsaved changes'
+  },
   'settings.profile': {
     ja: 'プロフィール',
     en: 'Profile'
@@ -148,6 +164,188 @@ export const translations: Translations = {
   'settings.language': {
     ja: '言語・地域',
     en: 'Language & Region'
+  },
+  
+  // テーマ設定
+  'theme.title': {
+    ja: 'テーマ設定',
+    en: 'Theme Settings'
+  },
+  'theme.displayMode': {
+    ja: '表示モード',
+    en: 'Display Mode'
+  },
+  'theme.light': {
+    ja: 'ライト',
+    en: 'Light'
+  },
+  'theme.dark': {
+    ja: 'ダーク',
+    en: 'Dark'
+  },
+  'theme.system': {
+    ja: 'システム',
+    en: 'System'
+  },
+  'theme.lightDesc': {
+    ja: '明るいテーマ',
+    en: 'Light theme'
+  },
+  'theme.darkDesc': {
+    ja: '暗いテーマ',
+    en: 'Dark theme'
+  },
+  'theme.systemDesc': {
+    ja: 'システム設定に従う',
+    en: 'Follow system setting'
+  },
+  'theme.currentSetting': {
+    ja: '現在の設定',
+    en: 'Current setting'
+  },
+  'theme.systemNote': {
+    ja: 'システムの設定に応じて自動的に切り替わります',
+    en: 'Automatically switches based on system settings'
+  },
+  
+  // 言語設定
+  'language.title': {
+    ja: '言語・地域設定',
+    en: 'Language & Region Settings'
+  },
+  'language.displayLanguage': {
+    ja: '表示言語',
+    en: 'Display Language'
+  },
+  'language.japanese': {
+    ja: '日本語',
+    en: 'Japanese'
+  },
+  'language.english': {
+    ja: 'English',
+    en: 'English'
+  },
+  'language.timeFormat': {
+    ja: '時刻形式',
+    en: 'Time Format'
+  },
+  'language.12hour': {
+    ja: '12時間形式',
+    en: '12-hour format'
+  },
+  'language.24hour': {
+    ja: '24時間形式',
+    en: '24-hour format'
+  },
+  'language.12hourDesc': {
+    ja: 'AM/PM表示',
+    en: 'AM/PM display'
+  },
+  'language.24hourDesc': {
+    ja: '24時間表示',
+    en: '24-hour display'
+  },
+  'language.currentSetting': {
+    ja: '現在の設定',
+    en: 'Current setting'
+  },
+  'language.note': {
+    ja: '注意',
+    en: 'Note'
+  },
+  'language.reloadNote': {
+    ja: '言語を変更すると、アプリケーションが再読み込みされます。',
+    en: 'Changing the language will reload the application.'
+  },
+  
+  // 通知設定
+  'notifications.title': {
+    ja: '通知設定',
+    en: 'Notification Settings'
+  },
+  'notifications.taskReminders': {
+    ja: 'タスクリマインダー',
+    en: 'Task Reminders'
+  },
+  'notifications.reminderFunction': {
+    ja: 'リマインダー機能',
+    en: 'Reminder Function'
+  },
+  'notifications.reminderDesc': {
+    ja: 'タスクの期限前に通知を送信',
+    en: 'Send notifications before task deadlines'
+  },
+  'notifications.dailySummary': {
+    ja: '日次サマリー',
+    en: 'Daily Summary'
+  },
+  'notifications.dailySummaryEnabled': {
+    ja: '日次サマリー送信',
+    en: 'Send Daily Summary'
+  },
+  'notifications.dailySummaryDesc': {
+    ja: '毎日の終わりにタスクの進捗を通知',
+    en: 'Notify task progress at the end of each day'
+  },
+  'notifications.sendTime': {
+    ja: '送信時刻',
+    en: 'Send Time'
+  },
+  'notifications.includeInfo': {
+    ja: '含める情報',
+    en: 'Include Information'
+  },
+  'notifications.completedTasks': {
+    ja: '完了したタスク',
+    en: 'Completed tasks'
+  },
+  'notifications.incompleteTasks': {
+    ja: '未完了のタスク',
+    en: 'Incomplete tasks'
+  },
+  'notifications.priorityInfo': {
+    ja: '優先度情報',
+    en: 'Priority information'
+  },
+  'notifications.weeklyReport': {
+    ja: '週次レポート',
+    en: 'Weekly Report'
+  },
+  'notifications.weeklyReportEnabled': {
+    ja: '週次レポート送信',
+    en: 'Send Weekly Report'
+  },
+  'notifications.weeklyReportDesc': {
+    ja: '週の終わりに完了したタスクのレポートを送信',
+    en: 'Send report of completed tasks at the end of the week'
+  },
+  'notifications.deliveryDay': {
+    ja: '配信曜日',
+    en: 'Delivery Day'
+  },
+  'notifications.deliveryTime': {
+    ja: '配信時間',
+    en: 'Delivery Time'
+  },
+  'notifications.reportFormat': {
+    ja: 'レポート形式',
+    en: 'Report Format'
+  },
+  'notifications.summary': {
+    ja: 'サマリー',
+    en: 'Summary'
+  },
+  'notifications.detailed': {
+    ja: '詳細',
+    en: 'Detailed'
+  },
+  'notifications.summaryDesc': {
+    ja: '簡潔な概要',
+    en: 'Brief overview'
+  },
+  'notifications.detailedDesc': {
+    ja: '完全なレポート',
+    en: 'Complete report'
   },
   
   // 認証
@@ -206,6 +404,34 @@ export const translations: Translations = {
   'day.sat': {
     ja: '土',
     en: 'Sat'
+  },
+  'day.sunday': {
+    ja: '日曜日',
+    en: 'Sunday'
+  },
+  'day.monday': {
+    ja: '月曜日',
+    en: 'Monday'
+  },
+  'day.tuesday': {
+    ja: '火曜日',
+    en: 'Tuesday'
+  },
+  'day.wednesday': {
+    ja: '水曜日',
+    en: 'Wednesday'
+  },
+  'day.thursday': {
+    ja: '木曜日',
+    en: 'Thursday'
+  },
+  'day.friday': {
+    ja: '金曜日',
+    en: 'Friday'
+  },
+  'day.saturday': {
+    ja: '土曜日',
+    en: 'Saturday'
   },
   
   // 月

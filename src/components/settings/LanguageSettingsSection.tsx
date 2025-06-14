@@ -5,6 +5,7 @@ import {
   ClockIcon
 } from '@heroicons/react/24/outline';
 import { LanguageSettings } from '../../types/settings';
+import { t } from '../../utils/i18n';
 import clsx from 'clsx';
 
 interface LanguageSettingsSectionProps {
@@ -22,13 +23,13 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
   };
 
   const languageOptions = [
-    { value: 'ja', label: '日本語', nativeName: '日本語', flag: '🇯🇵' },
-    { value: 'en', label: 'English', nativeName: 'English', flag: '🇺🇸' },
+    { value: 'ja', label: t('language.japanese'), nativeName: '日本語', flag: '🇯🇵' },
+    { value: 'en', label: t('language.english'), nativeName: 'English', flag: '🇺🇸' },
   ] as const;
 
   const timeFormatOptions = [
-    { value: '12h', label: '12時間形式', example: '2:30 PM', description: 'AM/PM表示' },
-    { value: '24h', label: '24時間形式', example: '14:30', description: '24時間表示' },
+    { value: '12h', label: t('language.12hour'), example: '2:30 PM', description: t('language.12hourDesc') },
+    { value: '24h', label: t('language.24hour'), example: '14:30', description: t('language.24hourDesc') },
   ] as const;
 
   return (
@@ -39,13 +40,13 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
       className="space-y-6"
     >
       <div>
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">言語・地域設定</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-4">{t('language.title')}</h2>
         
         {/* 言語設定 */}
         <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <LanguageIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-            <h3 className="font-medium text-slate-900 dark:text-slate-100">表示言語</h3>
+            <h3 className="font-medium text-slate-900 dark:text-slate-100">{t('language.displayLanguage')}</h3>
           </div>
           
           <div className="space-y-3">
@@ -78,7 +79,7 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
           
           <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg">
             <p className="text-sm text-amber-700 dark:text-amber-300">
-              <strong>注意:</strong> 言語を変更すると、アプリケーションが再読み込みされます。
+              <strong>{t('language.note')}:</strong> {t('language.reloadNote')}
             </p>
           </div>
         </div>
@@ -87,7 +88,7 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
         <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-4">
             <ClockIcon className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-            <h3 className="font-medium text-slate-900 dark:text-slate-100">時刻形式</h3>
+            <h3 className="font-medium text-slate-900 dark:text-slate-100">{t('language.timeFormat')}</h3>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -117,7 +118,7 @@ export function LanguageSettingsSection({ settings, onSettingsChange }: Language
           
           <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>現在の設定:</strong> {timeFormatOptions.find(opt => opt.value === settings.timeFormat)?.label}
+              <strong>{t('language.currentSetting')}:</strong> {timeFormatOptions.find(opt => opt.value === settings.timeFormat)?.label}
             </p>
           </div>
         </div>

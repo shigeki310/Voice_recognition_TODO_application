@@ -16,6 +16,7 @@ import { AccountSection } from './AccountSection';
 import { NotificationSettingsSection } from './NotificationSettingsSection';
 import { ThemeSettingsSection } from './ThemeSettingsSection';
 import { LanguageSettingsSection } from './LanguageSettingsSection';
+import { t } from '../../utils/i18n';
 import clsx from 'clsx';
 
 interface UserSettingsProps {
@@ -86,7 +87,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       // 成功メッセージの表示
       const successMessage = document.createElement('div');
       successMessage.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      successMessage.textContent = '設定が保存されました';
+      successMessage.textContent = t('settings.saved');
       document.body.appendChild(successMessage);
       
       setTimeout(() => {
@@ -100,7 +101,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       // エラーメッセージの表示
       const errorMessage = document.createElement('div');
       errorMessage.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
-      errorMessage.textContent = '設定の保存に失敗しました';
+      errorMessage.textContent = t('settings.saveError');
       document.body.appendChild(errorMessage);
       
       setTimeout(() => {
@@ -242,11 +243,11 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   }, [settings.theme.mode]);
 
   const sections = [
-    { id: 'profile', label: 'プロフィール', icon: UserCircleIcon },
-    { id: 'account', label: 'アカウント', icon: KeyIcon },
-    { id: 'notifications', label: '通知設定', icon: BellIcon },
-    { id: 'theme', label: 'テーマ', icon: PaintBrushIcon },
-    { id: 'language', label: '言語・地域', icon: LanguageIcon },
+    { id: 'profile', label: t('settings.profile'), icon: UserCircleIcon },
+    { id: 'account', label: t('settings.account'), icon: KeyIcon },
+    { id: 'notifications', label: t('settings.notifications'), icon: BellIcon },
+    { id: 'theme', label: t('settings.theme'), icon: PaintBrushIcon },
+    { id: 'language', label: t('settings.language'), icon: LanguageIcon },
   ];
 
   if (!isOpen) return null;
@@ -275,7 +276,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
             >
               <ArrowLeftIcon className="w-5 h-5" />
             </button>
-            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">設定</h1>
+            <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">{t('settings.title')}</h1>
           </div>
           
           <div className="flex items-center gap-2">
@@ -285,7 +286,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-700"
               >
-                未保存の変更があります
+                {t('settings.unsavedChanges')}
               </motion.div>
             )}
             
@@ -304,7 +305,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
               ) : (
                 <CheckIcon className="w-4 h-4" />
               )}
-              {loading ? '保存中...' : '保存'}
+              {loading ? t('settings.saving') : t('settings.save')}
             </button>
           </div>
         </div>
