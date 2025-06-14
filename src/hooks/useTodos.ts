@@ -23,7 +23,7 @@ export function useTodos() {
       setLoading(true);
       console.log('TODOデータを読み込み中...', userId);
 
-      const { data: connectionTest, error: connectionError } = await supabase
+      const { error: connectionError } = await supabase
         .from('todos')
         .select('count', { count: 'exact', head: true });
 

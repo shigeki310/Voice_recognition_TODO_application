@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ViewMode } from '../types/todo';
 import { ViewModeSelector } from './ViewModeSelector';
@@ -8,7 +8,7 @@ import { ja } from 'date-fns/locale';
 import { useAuth } from '../hooks/useAuth';
 import { UserSettings } from './settings/UserSettings';
 import { Todo } from '../types/todo';
-import { t, getCurrentLanguage, formatDate } from '../utils/i18n';
+import { t, getCurrentLanguage } from '../utils/i18n';
 
 interface HeaderProps {
   viewMode: ViewMode;
