@@ -23,13 +23,22 @@ export function useTodos() {
       setLoading(true);
       console.log('TODOデータを読み込み中...', userId);
 
+      // First, test the connection with a simple query
       const { error: connectionError } = await supabase
         .from('todos')
         .select('count', { count: 'exact', head: true });
 
       if (connectionError) {
         console.error('Supabase connection error:', connectionError);
-        throw new Error(`Database connection failed: ${connectionError.message}`);
+        
+        // Provide more specific error handling
+        if (connectionError.message.includes('Failed to fetch')) {
+          throw new Error('Unable to connect to the database. Please check your internet connection and Supabase configuration.');
+        } else if (connectionError.message.includes('Invalid API key')) {
+          throw new Error('Invalid Supabase API key. Please check your environment variables.');
+        } else {
+          throw new Error(`Database connection failed: ${connectionError.message}`);
+        }
       }
 
       const { data, error } = await supabase
@@ -62,6 +71,14 @@ export function useTodos() {
       console.log(`TODOデータ読み込み完了: ${formattedTodos.length}件`);
     } catch (error) {
       console.error('Error loading todos:', error);
+      
+      // Show user-friendly error message
+      if (error instanceof Error) {
+        if (error.message.includes('Unable to connect to the database')) {
+          console.error('Connection issue detected. Please verify your Supabase configuration.');
+        }
+      }
+      
       setTodos([]);
     } finally {
       setLoading(false);
@@ -91,8 +108,13 @@ export function useTodos() {
 
         if (newUserId) {
           // ログイン時：TODOを読み込み
-          await loadTodos(newUserId);
-          isInitialized.current = true;
+          try {
+            await loadTodos(newUserId);
+            isInitialized.current = true;
+          } catch (error) {
+            console.error('Failed to load todos during auth change:', error);
+            isInitialized.current = true; // Still mark as initialized to prevent infinite loops
+          }
         } else {
           // ログアウト時：TODOをクリア
           console.log('ログアウトのため、TODOをクリア');
@@ -103,8 +125,13 @@ export function useTodos() {
       } else if (!isInitialized.current && newUserId) {
         // 同じユーザーだが初期化されていない場合
         console.log('同じユーザーの初期化を実行');
-        await loadTodos(newUserId);
-        isInitialized.current = true;
+        try {
+          await loadTodos(newUserId);
+          isInitialized.current = true;
+        } catch (error) {
+          console.error('Failed to load todos during initialization:', error);
+          isInitialized.current = true; // Still mark as initialized to prevent infinite loops
+        }
       } else {
         // 変更なし、または既に初期化済み
         console.log('TODO読み込みをスキップ（変更なしまたは初期化済み）');

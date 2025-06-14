@@ -17,6 +17,12 @@ if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')
   throw new Error('Invalid Supabase URL format. Expected format: https://your-project-ref.supabase.co');
 }
 
+// Check for placeholder values
+if (supabaseUrl.includes('your-project-ref') || supabaseAnonKey.includes('your-anon-key')) {
+  console.error('Placeholder Supabase credentials detected. Please update your .env file with actual values.');
+  throw new Error('Please update your .env file with actual Supabase credentials from your project dashboard.');
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -65,6 +71,10 @@ export type Database = {
           completed: boolean;
           priority: 'low' | 'medium' | 'high';
           due_date: string;
+          due_time: string | null;
+          reminder_enabled: boolean;
+          reminder_time: number | null;
+          repeat_type: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
           created_at: string;
           updated_at: string;
         };
@@ -76,6 +86,10 @@ export type Database = {
           completed?: boolean;
           priority?: 'low' | 'medium' | 'high';
           due_date: string;
+          due_time?: string | null;
+          reminder_enabled?: boolean;
+          reminder_time?: number | null;
+          repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
           created_at?: string;
           updated_at?: string;
         };
@@ -87,6 +101,10 @@ export type Database = {
           completed?: boolean;
           priority?: 'low' | 'medium' | 'high';
           due_date?: string;
+          due_time?: string | null;
+          reminder_enabled?: boolean;
+          reminder_time?: number | null;
+          repeat_type?: 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
           created_at?: string;
           updated_at?: string;
         };
