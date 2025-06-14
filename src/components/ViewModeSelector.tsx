@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ViewMode } from '../types/todo';
 import { CalendarDaysIcon, CalendarIcon, Squares2X2Icon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { t } from '../utils/i18n';
 
 interface ViewModeSelectorProps {
   currentMode: ViewMode;
@@ -9,16 +10,16 @@ interface ViewModeSelectorProps {
 }
 
 const modes = [
-  { key: 'day' as ViewMode, label: '本日', shortLabel: '日', icon: CalendarDaysIcon },
-  { key: 'week' as ViewMode, label: '週', shortLabel: '週', icon: CalendarIcon },
-  { key: 'month' as ViewMode, label: '月', shortLabel: '月', icon: Squares2X2Icon },
-  { key: 'future' as ViewMode, label: '次月以降', shortLabel: '将来', icon: ArrowRightIcon },
+  { key: 'day' as ViewMode, icon: CalendarDaysIcon },
+  { key: 'week' as ViewMode, icon: CalendarIcon },
+  { key: 'month' as ViewMode, icon: Squares2X2Icon },
+  { key: 'future' as ViewMode, icon: ArrowRightIcon },
 ];
 
 export function ViewModeSelector({ currentMode, onModeChange }: ViewModeSelectorProps) {
   return (
     <div className="flex bg-slate-100 rounded-xl p-1 overflow-x-auto">
-      {modes.map(({ key, label, shortLabel, icon: Icon }) => (
+      {modes.map(({ key, icon: Icon }) => (
         <button
           key={key}
           onClick={() => onModeChange(key)}
@@ -33,8 +34,7 @@ export function ViewModeSelector({ currentMode, onModeChange }: ViewModeSelector
             />
           )}
           <Icon className="w-3 sm:w-4 h-3 sm:h-4 relative z-10" />
-          <span className="relative z-10 hidden sm:inline">{label}</span>
-          <span className="relative z-10 sm:hidden">{shortLabel}</span>
+          <span className="relative z-10">{t(`view.${key}`)}</span>
         </button>
       ))}
     </div>

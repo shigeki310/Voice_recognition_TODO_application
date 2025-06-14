@@ -1,9 +1,6 @@
 export interface NotificationSettings {
   taskReminders: {
     enabled: boolean;
-    timing: number; // 何分前に通知するか
-    sound: string; // 通知音の種類
-    pushNotifications: boolean;
   };
   dailySummary: {
     enabled: boolean;
@@ -22,8 +19,6 @@ export interface NotificationSettings {
 
 export interface ThemeSettings {
   mode: 'light' | 'dark' | 'system';
-  colorPalette: 'blue' | 'purple' | 'green' | 'orange' | 'pink';
-  fontSize: 'small' | 'medium' | 'large';
 }
 
 export interface LanguageSettings {
@@ -31,17 +26,10 @@ export interface LanguageSettings {
   timeFormat: '12h' | '24h';
 }
 
-export interface PrivacySettings {
-  exportFormat: 'csv' | 'json';
-  exportPeriod: 'all' | 'last30days' | 'last90days' | 'lastyear';
-  downloadFormat: 'zip' | 'individual';
-}
-
 export interface UserSettings {
   notifications: NotificationSettings;
   theme: ThemeSettings;
   language: LanguageSettings;
-  privacy: PrivacySettings;
 }
 
 export interface UserProfile {

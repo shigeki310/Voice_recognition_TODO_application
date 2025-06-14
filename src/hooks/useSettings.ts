@@ -5,9 +5,6 @@ const DEFAULT_SETTINGS: UserSettings = {
   notifications: {
     taskReminders: {
       enabled: true,
-      timing: 10,
-      sound: 'default',
-      pushNotifications: true,
     },
     dailySummary: {
       enabled: false,
@@ -25,17 +22,10 @@ const DEFAULT_SETTINGS: UserSettings = {
   },
   theme: {
     mode: 'light',
-    colorPalette: 'blue',
-    fontSize: 'medium',
   },
   language: {
     language: 'ja',
     timeFormat: '24h',
-  },
-  privacy: {
-    exportFormat: 'json',
-    exportPeriod: 'all',
-    downloadFormat: 'zip',
   },
 };
 
@@ -90,12 +80,6 @@ export function useSettings() {
     });
   }, [settings.language, saveSettings]);
 
-  const updatePrivacySettings = useCallback((newSettings: Partial<UserSettings['privacy']>) => {
-    return saveSettings({
-      privacy: { ...settings.privacy, ...newSettings }
-    });
-  }, [settings.privacy, saveSettings]);
-
   // 設定をリセット
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
@@ -109,7 +93,6 @@ export function useSettings() {
     updateNotificationSettings,
     updateThemeSettings,
     updateLanguageSettings,
-    updatePrivacySettings,
     resetSettings,
   };
 }

@@ -7,7 +7,6 @@ import {
   BellIcon,
   PaintBrushIcon,
   LanguageIcon,
-  DocumentArrowDownIcon,
   CheckIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../hooks/useAuth';
@@ -17,7 +16,6 @@ import { AccountSection } from './AccountSection';
 import { NotificationSettingsSection } from './NotificationSettingsSection';
 import { ThemeSettingsSection } from './ThemeSettingsSection';
 import { LanguageSettingsSection } from './LanguageSettingsSection';
-import { PrivacySettingsSection } from './PrivacySettingsSection';
 import clsx from 'clsx';
 
 interface UserSettingsProps {
@@ -35,9 +33,6 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     notifications: {
       taskReminders: {
         enabled: true,
-        timing: 10,
-        sound: 'default',
-        pushNotifications: true,
       },
       dailySummary: {
         enabled: false,
@@ -55,17 +50,10 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     },
     theme: {
       mode: 'light',
-      colorPalette: 'blue',
-      fontSize: 'medium',
     },
     language: {
       language: 'ja',
       timeFormat: '24h',
-    },
-    privacy: {
-      exportFormat: 'json',
-      exportPeriod: 'all',
-      downloadFormat: 'zip',
     },
   });
 
@@ -146,14 +134,9 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       language: { ...prev.language, ...newSettings }
     }));
     setHasChanges(true);
-  };
-
-  const handlePrivacySettingsChange = (newSettings: Partial<UserSettingsType['privacy']>) => {
-    setSettings(prev => ({
-      ...prev,
-      privacy: { ...prev.privacy, ...newSettings }
-    }));
-    setHasChanges(true);
+    
+    // 言語設定を即座に適用
+    applyLanguageSettings({ ...settings.language, ...newSettings });
   };
 
   const handleProfileChange = (newProfile: Partial<typeof profileData>) => {
@@ -165,45 +148,45 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const applyThemeSettings = (themeSettings: UserSettingsType['theme']) => {
     const root = document.documentElement;
     
-    // フォントサイズの適用
-    switch (themeSettings.fontSize) {
-      case 'small':
-        root.style.fontSize = '14px';
-        break;
-      case 'large':
-        root.style.fontSize = '18px';
-        break;
-      default:
-        root.style.fontSize = '16px';
-        break;
-    }
-    
-    // カラーパレットの適用
-    const colorPalettes = {
-      blue: { primary: '#0284c7', secondary: '#0ea5e9' },
-      purple: { primary: '#7c3aed', secondary: '#8b5cf6' },
-      green: { primary: '#059669', secondary: '#10b981' },
-      orange: { primary: '#ea580c', secondary: '#f97316' },
-      pink: { primary: '#db2777', secondary: '#ec4899' },
-    };
-    
-    const palette = colorPalettes[themeSettings.colorPalette];
-    root.style.setProperty('--color-primary-600', palette.primary);
-    root.style.setProperty('--color-primary-500', palette.secondary);
-    
     // ダークモードの適用
     if (themeSettings.mode === 'dark') {
       root.classList.add('dark');
+      document.body.style.backgroundColor = '#0f172a';
+      document.body.style.color = '#f1f5f9';
     } else if (themeSettings.mode === 'light') {
       root.classList.remove('dark');
+      document.body.style.backgroundColor = '#f8fafc';
+      document.body.style.color = '#0f172a';
     } else {
       // システム設定に従う
       if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         root.classList.add('dark');
+        document.body.style.backgroundColor = '#0f172a';
+        document.body.style.color = '#f1f5f9';
       } else {
         root.classList.remove('dark');
+        document.body.style.backgroundColor = '#f8fafc';
+        document.body.style.color = '#0f172a';
       }
     }
+  };
+
+  // 言語設定を適用する関数
+  const applyLanguageSettings = (languageSettings: UserSettingsType['language']) => {
+    // 言語設定をHTMLのlang属性に反映
+    document.documentElement.lang = languageSettings.language;
+    
+    // 時刻形式の設定をグローバルに保存
+    window.voiceTodoTimeFormat = languageSettings.timeFormat;
+    
+    // 言語変更の通知
+    const event = new CustomEvent('languageChanged', { 
+      detail: { 
+        language: languageSettings.language,
+        timeFormat: languageSettings.timeFormat 
+      } 
+    });
+    window.dispatchEvent(event);
   };
 
   // 設定をローカルストレージから読み込み
@@ -215,8 +198,9 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       try {
         const parsedSettings = JSON.parse(savedSettings);
         setSettings(prev => ({ ...prev, ...parsedSettings }));
-        // 読み込み時にテーマを適用
+        // 読み込み時にテーマと言語を適用
         applyThemeSettings(parsedSettings.theme || settings.theme);
+        applyLanguageSettings(parsedSettings.language || settings.language);
       } catch (error) {
         console.error('設定の読み込みに失敗しました:', error);
       }
@@ -238,7 +222,6 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     { id: 'notifications', label: '通知設定', icon: BellIcon },
     { id: 'theme', label: 'テーマ', icon: PaintBrushIcon },
     { id: 'language', label: '言語・地域', icon: LanguageIcon },
-    { id: 'privacy', label: 'データエクスポート', icon: DocumentArrowDownIcon },
   ];
 
   if (!isOpen) return null;
@@ -369,15 +352,6 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
                     key="language"
                     settings={settings.language}
                     onSettingsChange={handleLanguageSettingsChange}
-                  />
-                )}
-                
-                {activeSection === 'privacy' && (
-                  <PrivacySettingsSection
-                    key="privacy"
-                    settings={settings.privacy}
-                    onSettingsChange={handlePrivacySettingsChange}
-                    user={authState.user}
                   />
                 )}
               </AnimatePresence>

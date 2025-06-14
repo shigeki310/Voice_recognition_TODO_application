@@ -2,8 +2,6 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { 
   BellIcon,
-  ClockIcon,
-  SpeakerWaveIcon,
   CalendarDaysIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
@@ -43,23 +41,6 @@ export function NotificationSettingsSection({ settings, onSettingsChange }: Noti
     });
   };
 
-  const timingOptions = [
-    { value: 10, label: '10分前' },
-    { value: 30, label: '30分前' },
-    { value: 60, label: '1時間前' },
-    { value: 360, label: '6時間前' },
-    { value: 1440, label: '1日前' },
-    { value: 10080, label: '1週間前' },
-  ];
-
-  const soundOptions = [
-    { value: 'default', label: 'デフォルト' },
-    { value: 'bell', label: 'ベル' },
-    { value: 'chime', label: 'チャイム' },
-    { value: 'notification', label: '通知音' },
-    { value: 'silent', label: 'サイレント' },
-  ];
-
   const dayOfWeekOptions = [
     { value: 0, label: '日曜日' },
     { value: 1, label: '月曜日' },
@@ -87,96 +68,25 @@ export function NotificationSettingsSection({ settings, onSettingsChange }: Noti
             <h3 className="font-medium text-slate-900">タスクリマインダー</h3>
           </div>
           
-          <div className="space-y-4">
-            {/* リマインダー有効/無効 */}
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-slate-900">リマインダー機能</h4>
-                <p className="text-sm text-slate-500">タスクの期限前に通知を送信</p>
-              </div>
-              <button
-                onClick={() => handleTaskReminderChange('enabled', !settings.taskReminders.enabled)}
-                className={clsx(
-                  'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                  settings.taskReminders.enabled ? 'bg-primary-600' : 'bg-slate-200'
-                )}
-              >
-                <span
-                  className={clsx(
-                    'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200',
-                    settings.taskReminders.enabled ? 'translate-x-6' : 'translate-x-1'
-                  )}
-                />
-              </button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-medium text-slate-900">リマインダー機能</h4>
+              <p className="text-sm text-slate-500">タスクの期限前に通知を送信</p>
             </div>
-
-            {settings.taskReminders.enabled && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-4 pl-4 border-l-2 border-slate-100"
-              >
-                {/* プッシュ通知 */}
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h4 className="font-medium text-slate-900">プッシュ通知</h4>
-                    <p className="text-sm text-slate-500">ブラウザ通知を使用</p>
-                  </div>
-                  <button
-                    onClick={() => handleTaskReminderChange('pushNotifications', !settings.taskReminders.pushNotifications)}
-                    className={clsx(
-                      'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
-                      settings.taskReminders.pushNotifications ? 'bg-primary-600' : 'bg-slate-200'
-                    )}
-                  >
-                    <span
-                      className={clsx(
-                        'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200',
-                        settings.taskReminders.pushNotifications ? 'translate-x-6' : 'translate-x-1'
-                      )}
-                    />
-                  </button>
-                </div>
-
-                {/* 通知タイミング */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    <ClockIcon className="w-4 h-4 inline mr-1" />
-                    通知タイミング
-                  </label>
-                  <select
-                    value={settings.taskReminders.timing}
-                    onChange={(e) => handleTaskReminderChange('timing', Number(e.target.value))}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    {timingOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 通知音 */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    <SpeakerWaveIcon className="w-4 h-4 inline mr-1" />
-                    通知音
-                  </label>
-                  <select
-                    value={settings.taskReminders.sound}
-                    onChange={(e) => handleTaskReminderChange('sound', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  >
-                    {soundOptions.map(option => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </motion.div>
-            )}
+            <button
+              onClick={() => handleTaskReminderChange('enabled', !settings.taskReminders.enabled)}
+              className={clsx(
+                'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200',
+                settings.taskReminders.enabled ? 'bg-primary-600' : 'bg-slate-200'
+              )}
+            >
+              <span
+                className={clsx(
+                  'inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200',
+                  settings.taskReminders.enabled ? 'translate-x-6' : 'translate-x-1'
+                )}
+              />
+            </button>
           </div>
         </div>
 

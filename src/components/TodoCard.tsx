@@ -16,6 +16,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { CheckCircleIcon as CheckCircleIconSolid } from '@heroicons/react/24/solid';
 import clsx from 'clsx';
+import { t, getCurrentLanguage, formatTime, formatDate } from '../utils/i18n';
 
 interface TodoCardProps {
   todo: Todo;
@@ -31,7 +32,7 @@ const priorityConfig = {
     color: 'text-red-500',
     bg: 'bg-red-50',
     border: 'border-red-200',
-    label: '高',
+    label: t('task.priority.high'),
     accent: 'bg-red-500'
   },
   medium: {
@@ -39,7 +40,7 @@ const priorityConfig = {
     color: 'text-amber-500',
     bg: 'bg-amber-50',
     border: 'border-amber-200',
-    label: '中',
+    label: t('task.priority.medium'),
     accent: 'bg-amber-500'
   },
   low: {
@@ -47,7 +48,7 @@ const priorityConfig = {
     color: 'text-green-500',
     bg: 'bg-green-50',
     border: 'border-green-200',
-    label: '低',
+    label: t('task.priority.low'),
     accent: 'bg-green-500'
   }
 };
@@ -79,6 +80,7 @@ const truncateTitle = (title: string, maxLength: number = 12): string => {
 };
 
 export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: TodoCardProps) {
+  const language = getCurrentLanguage();
   const priority = priorityConfig[todo.priority];
   const PriorityIcon = priority.icon;
   
@@ -87,16 +89,16 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
 
   // 時刻とリマインダーの統合表示
   const getTimeInfo = () => {
-    const timeDisplay = todo.dueTime || null;
+    const timeDisplay = todo.dueTime ? formatTime(todo.dueTime) : null;
     const reminderDisplay = todo.reminderEnabled && todo.reminderTime ? (() => {
       if (todo.reminderTime >= 1440) {
         const days = Math.floor(todo.reminderTime / 1440);
-        return `${days}日前`;
+        return language === 'en' ? `${days} day${days > 1 ? 's' : ''} before` : `${days}日前`;
       } else if (todo.reminderTime >= 60) {
         const hours = Math.floor(todo.reminderTime / 60);
-        return `${hours}時間前`;
+        return language === 'en' ? `${hours} hour${hours > 1 ? 's' : ''} before` : `${hours}時間前`;
       } else {
-        return `${todo.reminderTime}分前`;
+        return language === 'en' ? `${todo.reminderTime} min before` : `${todo.reminderTime}分前`;
       }
     })() : null;
 
@@ -158,7 +160,10 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
                   'text-xs',
                   isOverdue && !todo.completed ? 'text-red-500 font-medium' : 'text-slate-500'
                 )}>
-                  {format(todo.dueDate, 'M/d', { locale: ja })}
+                  {language === 'en' 
+                    ? format(todo.dueDate, 'M/d') 
+                    : format(todo.dueDate, 'M/d', { locale: ja })
+                  }
                 </span>
               </div>
               
@@ -182,7 +187,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
               <div className={clsx(
                 'w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ml-auto',
                 priority.accent
-              )} title={`優先度: ${priority.label}`} />
+              )} title={`${t('form.priority')}: ${priority.label}`} />
             </div>
           </div>
 
@@ -265,7 +270,7 @@ export function TodoCard({ todo, onToggle, onEdit, onDelete, compact = false }: 
                   isOverdue && !todo.completed && 'text-red-500 font-medium',
                   isDueToday && !todo.completed && 'text-amber-600 font-medium'
                 )}>
-                  {format(todo.dueDate, 'M月d日', { locale: ja })}
+                  {formatDate(todo.dueDate)}
                 </span>
               </div>
               

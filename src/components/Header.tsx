@@ -8,6 +8,7 @@ import { ja } from 'date-fns/locale';
 import { useAuth } from '../hooks/useAuth';
 import { UserSettings } from './settings/UserSettings';
 import { Todo } from '../types/todo';
+import { t, getCurrentLanguage, formatDate } from '../utils/i18n';
 
 interface HeaderProps {
   viewMode: ViewMode;
@@ -21,6 +22,7 @@ interface HeaderProps {
 export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange, onAddTodo, todos }: HeaderProps) {
   const { authState, logout } = useAuth();
   const [showUserSettings, setShowUserSettings] = useState(false);
+  const language = getCurrentLanguage();
 
   // 基準日: 2025/06/08
   const baseDate = new Date('2025-06-08');
@@ -28,15 +30,24 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
   const getDateDisplay = () => {
     switch (viewMode) {
       case 'day':
+        if (language === 'en') {
+          return format(selectedDate, 'MMM d (E)', { locale: ja });
+        }
         return format(selectedDate, 'M月d日 (E)', { locale: ja });
       case 'week':
         const weekStart = startOfWeek(selectedDate, { weekStartsOn: 0 });
         const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 0 });
+        if (language === 'en') {
+          return `${format(weekStart, 'MMM d')} - ${format(weekEnd, 'MMM d')}`;
+        }
         return `${format(weekStart, 'M月d日', { locale: ja })} - ${format(weekEnd, 'M月d日', { locale: ja })}`;
       case 'month':
+        if (language === 'en') {
+          return format(selectedDate, 'MMMM yyyy');
+        }
         return format(selectedDate, 'yyyy年M月', { locale: ja });
       case 'future':
-        return '次月以降のタスク';
+        return t('view.future');
       default:
         return '';
     }
@@ -129,7 +140,7 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
             {/* 左側：アプリタイトル */}
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                Voice TODO
+                {t('app.title')}
               </h1>
             </div>
             
@@ -140,7 +151,7 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="p-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors duration-200"
-                title="ユーザー設定"
+                title={t('settings.title')}
               >
                 <Cog6ToothIcon className="w-5 h-5" />
               </motion.button>
@@ -151,9 +162,9 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="text-xs text-slate-500 hover:text-slate-700 px-2 py-1 rounded transition-colors duration-200"
-                  title="ログアウト"
+                  title={t('header.logout')}
                 >
-                  ログアウト
+                  {t('header.logout')}
                 </motion.button>
               )}
             </div>
@@ -168,7 +179,7 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
                 transition={{ delay: 0.1 }}
                 className="text-sm text-slate-600 font-medium"
               >
-                ようこそ、<span className="text-slate-800">{authState.user.username}</span>さん
+                {t('header.welcome', { username: authState.user.username })}
               </motion.p>
             </div>
           )}
@@ -212,7 +223,7 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
                   {getDateDisplay()}
                 </h2>
                 <span className="text-xs sm:text-sm text-slate-500 bg-slate-100 px-2 py-1 rounded-full w-fit">
-                  {taskCount}件のタスク
+                  {t('task.count', { count: taskCount })}
                 </span>
               </motion.div>
             </div>
@@ -228,7 +239,7 @@ export function Header({ viewMode, onViewModeChange, selectedDate, onDateChange,
               className="flex items-center justify-center sm:justify-start gap-2 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-xl font-medium transition-colors duration-200 shadow-sm hover:shadow-md"
             >
               <PlusIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">追加</span>
+              <span className="hidden sm:inline">{t('header.add')}</span>
             </motion.button>
           </div>
           
