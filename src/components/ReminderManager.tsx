@@ -9,15 +9,12 @@ interface ReminderManagerProps {
 export function ReminderManager({ todos }: ReminderManagerProps) {
   const { 
     scheduleReminder, 
-    cancelReminder, 
     cancelAllReminders,
     requestPermission, 
     permission,
     supported,
     scheduledCount,
     notificationInterval,
-    showDebugInfo,
-    debugInfo,
     scheduledReminders
   } = useNotifications();
 
@@ -234,7 +231,6 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
         scheduledCount,
         todosWithReminders: reminderTodos.length,
         initializationComplete: initializationComplete.current,
-        debugInfo,
         scheduledReminders: scheduledReminders.map(r => ({
           title: r.todoTitle,
           reminderTime: r.reminderTime.toLocaleString(),
@@ -247,12 +243,11 @@ export function ReminderManager({ todos }: ReminderManagerProps) {
       // デバッグ情報をグローバルに公開（開発時のみ）
       (window as any).reminderDebug = {
         ...debugData,
-        showDebugInfo,
         todos: reminderTodos,
         allTodos: todos
       };
     }
-  }, [permission, supported, scheduledCount, todos, debugInfo, showDebugInfo, scheduledReminders]);
+  }, [permission, supported, scheduledCount, todos, scheduledReminders]);
 
   // このコンポーネントは何も表示しない
   return null;
