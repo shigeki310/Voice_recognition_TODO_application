@@ -692,7 +692,19 @@ export function formatTime(time: string): string {
   if (timeFormat === '12h') {
     const [hours, minutes] = time.split(':').map(Number);
     const period = hours >= 12 ? t('time.pm') : t('time.am');
-    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+    
+    // 午前0時台（00:00〜00:59）は「0:xx 午前」として表示
+    let displayHours: number;
+    if (hours === 0) {
+      displayHours = 0;
+    } else if (hours > 12) {
+      displayHours = hours - 12;
+    } else if (hours === 12) {
+      displayHours = 12;
+    } else {
+      displayHours = hours;
+    }
+    
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   }
   
