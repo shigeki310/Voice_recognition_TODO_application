@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Supabase environment variables:', {
@@ -11,16 +11,16 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables. Please check your .env file.');
 }
 
-// Validate URL format
-if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
-  console.error('Invalid Supabase URL format:', supabaseUrl);
-  throw new Error('Invalid Supabase URL format. Expected format: https://your-project-ref.supabase.co');
-}
-
 // Check for placeholder values
 if (supabaseUrl.includes('your-project-ref') || supabaseAnonKey.includes('your-anon-key')) {
   console.error('Placeholder Supabase credentials detected. Please update your .env file with actual values.');
   throw new Error('Please update your .env file with actual Supabase credentials from your project dashboard.');
+}
+
+// Validate URL format
+if (!supabaseUrl.startsWith('https://') || !supabaseUrl.includes('.supabase.co')) {
+  console.error('Invalid Supabase URL format:', supabaseUrl);
+  throw new Error('Invalid Supabase URL format. Expected format: https://your-project-ref.supabase.co');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {

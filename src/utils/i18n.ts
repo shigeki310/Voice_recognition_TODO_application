@@ -737,7 +737,7 @@ export function formatDate(date: Date, format: 'short' | 'long' = 'short'): stri
 }
 
 // 曜日の取得
-export function getDayName(dayIndex: number, short: boolean = true): string {
+export function getDayName(dayIndex: number): string {
   const days = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
   return t(`day.${days[dayIndex]}`);
 }

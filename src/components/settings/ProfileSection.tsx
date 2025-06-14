@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   UserCircleIcon,
@@ -11,7 +11,6 @@ import { User } from '../../types/auth';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { t, getCurrentLanguage } from '../../utils/i18n';
-import clsx from 'clsx';
 
 interface ProfileSectionProps {
   profileData: {
