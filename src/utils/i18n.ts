@@ -10,8 +10,8 @@ export interface Translations {
 export const translations: Translations = {
   // ヘッダー
   'app.title': {
-    ja: 'Voice TODO',
-    en: 'Voice TODO'
+    ja: 'Daily Flow',
+    en: 'DailyFlow'
   },
   'header.welcome': {
     ja: 'ようこそ、{username}さん',
