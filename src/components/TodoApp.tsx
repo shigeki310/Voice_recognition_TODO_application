@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
-import { ViewMode, RepeatType } from '../types/todo';
+import { ViewMode, RepeatType, Todo } from '../types/todo';
 import { useTodos } from '../hooks/useTodos';
 import { useAuth } from '../hooks/useAuth';
 import { Header } from './Header';
@@ -14,7 +14,7 @@ export function TodoApp() {
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTodo, setEditingTodo] = useState(null);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [formSelectedDate, setFormSelectedDate] = useState<Date | undefined>(undefined);
 
@@ -44,7 +44,7 @@ export function TodoApp() {
     setIsFormOpen(true);
   };
 
-  const handleEditTodo = (todo) => {
+  const handleEditTodo = (todo: Todo) => {
     setEditingTodo(todo);
     setFormSelectedDate(undefined);
     setIsFormOpen(true);
@@ -95,7 +95,7 @@ export function TodoApp() {
     }
   };
 
-  const handleVoiceTranscript = (transcript) => {
+  const handleVoiceTranscript = (transcript: string) => {
     if (transcript.trim()) {
       setVoiceTranscript(transcript);
       setEditingTodo(null);

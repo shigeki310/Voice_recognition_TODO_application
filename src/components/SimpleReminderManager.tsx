@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { Todo } from '../types/todo';
 import { useSimpleNotifications } from '../hooks/useSimpleNotifications';
 
