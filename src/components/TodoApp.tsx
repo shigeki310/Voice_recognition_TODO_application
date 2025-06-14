@@ -14,7 +14,7 @@ export function TodoApp() {
   const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
+  const [editingTodo, setEditingTodo] = useState<Todo | undefined>(undefined);
   const [voiceTranscript, setVoiceTranscript] = useState('');
   const [formSelectedDate, setFormSelectedDate] = useState<Date | undefined>(undefined);
 
@@ -39,7 +39,7 @@ export function TodoApp() {
   }
 
   const handleAddTodo = () => {
-    setEditingTodo(null);
+    setEditingTodo(undefined);
     setFormSelectedDate(undefined);
     setIsFormOpen(true);
   };
@@ -51,7 +51,7 @@ export function TodoApp() {
   };
 
   const handleDateClick = (date: Date) => {
-    setEditingTodo(null);
+    setEditingTodo(undefined);
     setFormSelectedDate(date);
     setIsFormOpen(true);
   };
@@ -98,7 +98,7 @@ export function TodoApp() {
   const handleVoiceTranscript = (transcript: string) => {
     if (transcript.trim()) {
       setVoiceTranscript(transcript);
-      setEditingTodo(null);
+      setEditingTodo(undefined);
       setFormSelectedDate(undefined);
       setIsFormOpen(true);
     }
@@ -106,7 +106,7 @@ export function TodoApp() {
 
   const handleFormClose = () => {
     setIsFormOpen(false);
-    setEditingTodo(null);
+    setEditingTodo(undefined);
     setVoiceTranscript('');
     setFormSelectedDate(undefined);
   };

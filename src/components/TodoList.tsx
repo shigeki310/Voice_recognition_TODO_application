@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Todo, ViewMode } from '../types/todo';
 import { TodoCard } from './TodoCard';
