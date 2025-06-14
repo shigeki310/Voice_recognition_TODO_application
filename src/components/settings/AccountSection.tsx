@@ -17,7 +17,7 @@ interface AccountSectionProps {
   user: User | null;
 }
 
-export function AccountSection({ user }: AccountSectionProps) {
+export function AccountSection({ user: _user }: AccountSectionProps) {
   const { changePassword, deleteAccount } = useAuth();
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

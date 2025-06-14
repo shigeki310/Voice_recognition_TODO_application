@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { ViewMode } from '../types/todo';
 import { CalendarDaysIcon, CalendarIcon, Squares2X2Icon, ArrowRightIcon } from '@heroicons/react/24/outline';
